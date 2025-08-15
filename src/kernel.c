@@ -12,12 +12,19 @@ void kmain( void* mbd, unsigned int magic ) {
 
    clearScreen();
 
-   for (int i = 0 ; i < 100;i++) {
-      kprintf("%d,",i);
+   for (int i = 0 ; i < 26;i++) {
+      kprintf("%d\n",i);
    }
+   for (int i = 0; i < 8; i++) {
+      kprintf("%c", 'A' + i);
+      for (int j = 1; j < 10; j++) {
+         kprintf("%d", j);
+      }
+   }
+   kprintf("THis is a long message to test something\n");
+   kprintf("short");   
 
-
-   kprintf("\nprinting: %d", 12);
+   status("3rd Year MyOs Project - Jamie Ross");
    // getbootinfo (mbd, magic);
    // abort( );
 }

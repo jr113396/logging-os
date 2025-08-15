@@ -37,6 +37,24 @@ void writeError(char *error) {
    status(error);
 }
 
+void scrollScreen() {
+    // scroll the first 23 lines of the screen up 1 line cutting off the first and clearing the 23rd
+    for (int line = 1; line < (lines); line++) {
+        for (int xPos = 0; xPos < linelen; xPos++) {
+            uint16_t *currentLine = (videoram) + (linelen * line) + (xPos); // current line
+            uint16_t *prevLine = (videoram) + (linelen * (line -1)) + (xPos); // prev line
+            *prevLine = *currentLine; // move the data from the current line up one line position
+            if (line == lines -1) {
+                *currentLine = ' ' | BACKGROUND(terminal_bg_colour);
+            }
+        }
+    }
+    // for (int xPos = 0; xPos < linelen; xPos++) {
+    //     uint16_t *screenPos = (videoram) + (linelen * (lines-1)) + xPos;
+    //     *screenPos = '@' | BACKGROUND(terminal_bg_colour);
+    // }
+}
+
 void putchar (char c) {
    //
    //   Store character value (with colour information) at memory location
@@ -68,20 +86,26 @@ void putchar (char c) {
             break;
     }
 
+    if (newY > (lines - 1)) {// 1 line reserved for status
+        // newY = 0; // wrap to top - need to fix by shunting everything up
+        scrollScreen();
+        newY--;
+    }
     if (!controlChar) {
       //   status("Placed %c at x: %d, y: %d",c, x, y);
         putCharAtPos(c, x, y, WHITE, BLUE);
         newX++;
-
-    //   status(itoa(newX));
-        if (newX >= linelen) {
-            newX = 0;
-            newY++;
-            if (newY >= (lines - 1)) {// 1 line reserved for status
-            newY = 0; // wrap to top - need to fix by shunting everything up
-            }
-        }
     }
+    if (newX >= linelen) {
+        newX = 0;
+        newY++;
+    }
+    if (newY > (lines - 1)) {// 1 line reserved for status
+        // newY = 0; // wrap to top - need to fix by shunting everything up
+        scrollScreen();
+        newY--;
+    }
+    // status("Current y%d - maxY %d", newY, (lines -1));
     x = newX;
     y = newY;
     setcursor(x, y);
