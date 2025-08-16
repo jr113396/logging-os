@@ -55,45 +55,56 @@ void scrollScreen() {
     // }
 }
 
-void putchar (char c) {
-   //
-   //   Store character value (with colour information) at memory location
-   //   of current x,y screen position and update x and y ready to move
-   //   the cursor.
-   //
+
+void putcharcol (char c, int fgColour, int bgColour) {
+    //
+    //   Store character value (with colour information) at memory location
+    //   of current x,y screen position and update x and y ready to move
+    //   the cursor.
+    
+    // check if the entered foreground colour is invalid
+    if (fgColour < BLACK || fgColour > WHITE) {
+        status("Invalid foreground colour entered: %d", fgColour);
+        return;
+    }
+    
+    if (bgColour < BLACK || bgColour > WHITE) {
+        status("Invalid background colour entered: %d", bgColour);
+        return;
+    }
     int newX = x;
     int newY = y;
-
+    
     int controlChar = 0;
-   //  status("CTRL Char %d - %d, %d, %d", c, '\n', '\r', '\0');
+    //  status("CTRL Char %d - %d, %d, %d", c, '\n', '\r', '\0');
     switch (c) {
         case '\n':
-            newX = 0; // move to the start of the line
-            newY++; // move to the next line 
-            controlChar = 1;
-            break;
+        newX = 0; // move to the start of the line
+        newY++; // move to the next line 
+        controlChar = 1;
+        break;
         case '\r':
-            newX = 0; // move to the start of the line
-            controlChar = 1;
-            break;
-
+        newX = 0; // move to the start of the line
+        controlChar = 1;
+        break;
+        
         case '\0':
-            controlChar = 1;   
-            break;
-
+        controlChar = 1;   
+        break;
+        
         default:
-            controlChar = 0;
-            break;
+        controlChar = 0;
+        break;
     }
-
+    
     if (newY > (lines - 1)) {// 1 line reserved for status
         // newY = 0; // wrap to top - need to fix by shunting everything up
         scrollScreen();
         newY--;
     }
     if (!controlChar) {
-      //   status("Placed %c at x: %d, y: %d",c, x, y);
-        putCharAtPos(c, x, y, WHITE, BLUE);
+        //   status("Placed %c at x: %d, y: %d",c, x, y);
+        putCharAtPos(c, x, y, fgColour, bgColour);
         newX++;
     }
     if (newX >= linelen) {
@@ -111,21 +122,25 @@ void putchar (char c) {
     setcursor(x, y);
 }
 
+void putchar (char c) {
+    putcharcol(c, WHITE, BLUE);
+}
+
 //
 //   Clear the screen and move cursor to position 0,0
 //
 void vgainit ( ) {
-   uint16_t * screenp = videoram;
+    uint16_t * screenp = videoram;
+    
+    // 
+    //   The following just shows how you can output three characters
+    //
+    //
+    //   Clear the screen
+    //
 
-   // 
-   //   The following just shows how you can output three characters
-   //
-   //
-   //   Clear the screen
-   //
-
-   x = 0; y = 0;
-   setcursor(x, y);
+    x = 0; y = 0;
+    setcursor(x, y);
 }
 
 
