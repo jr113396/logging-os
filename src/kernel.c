@@ -1,5 +1,6 @@
 #include "globals.h"
 #include "multiboot.h"
+#include "gdt.h"
 
 void abort( ) {
    kprintf ( "\n**** ABORT! ****\n");
@@ -8,6 +9,7 @@ void abort( ) {
 }
 
 void kmain( void* mbd, unsigned int magic ) {
+   initGdt();
    vgainit  ( );
 
    clearScreen();
@@ -22,9 +24,9 @@ void kmain( void* mbd, unsigned int magic ) {
       }
    }
    kprintf("THis is a long message to test something\n");
-   kprintf("short");   
+   kprintf("short\n");   
 
    status("3rd Year MyOs Project - Jamie Ross");
-   // getbootinfo (mbd, magic);
-   // abort( );
+   getbootinfo (mbd, magic);
+   abort( );
 }

@@ -48,7 +48,7 @@ char *itoa(unsigned long n) {
 int kstrlen(char *s) {
     char *start = s;
     int i = 0;
-    while (*s++) i++;
+    while (*start++) i++;
             // kprintf("%d\n", i);
 
     return i;

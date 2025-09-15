@@ -28,6 +28,7 @@ LDFLAGS="-nostdlib" #-nostartfiles -nodefaultlibs
 
 ${AS} -o ${OBJ}/boot.o   ${SRC}/boot.s
 ${AS} -o ${OBJ}/loader.o ${SRC}/loader.s
+${AS} -o ${OBJ}/gdts.o ${SRC}/gdt.s
 
 ${CC} ${CFLAGS} -o ${OBJ}/io.o        -c ${SRC}/io.c
 ${CC} ${CFLAGS} -o ${OBJ}/kernel.o    -c ${SRC}/kernel.c
@@ -35,6 +36,8 @@ ${CC} ${CFLAGS} -o ${OBJ}/kprintf.o   -c ${SRC}/kprintf.c
 ${CC} ${CFLAGS} -o ${OBJ}/multiboot.o -c ${SRC}/multiboot.c
 ${CC} ${CFLAGS} -o ${OBJ}/vga.o       -c ${SRC}/vga.c
 ${CC} ${CFLAGS} -o ${OBJ}/conversions.o       -c ${SRC}/conversions.c
+${CC} ${CFLAGS} -o ${OBJ}/gdt.o -c ${SRC}/gdt.c
+
 
 
 ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
@@ -45,7 +48,11 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/kprintf.o \
 	${OBJ}/multiboot.o \
 	${OBJ}/vga.o \
-	${OBJ}/conversions.o
+	${OBJ}/conversions.o \
+	${OBJ}/gdts.o \
+	${OBJ}/gdt.o	
+
+
 
 /bin/cp grub/stage2_eltorito ${ISO}/boot/grub
 /bin/cat > ${ISO}/boot/grub/menu.lst << __ENDMENU__
