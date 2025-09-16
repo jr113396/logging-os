@@ -1,6 +1,6 @@
 #include "globals.h"
 #include "multiboot.h"
-#include "gdt.h"
+#include "gdt/gdt.h"
 
 void abort( ) {
    kprintf ( "\n**** ABORT! ****\n");

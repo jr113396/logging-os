@@ -26,17 +26,17 @@ LD=${CPATH}/${TARGET}-ld
 CFLAGS="-Wall -Wextra -fno-builtin" #-Werror 
 LDFLAGS="-nostdlib" #-nostartfiles -nodefaultlibs
 
-${AS} -o ${OBJ}/boot.o   ${SRC}/boot.s
-${AS} -o ${OBJ}/loader.o ${SRC}/loader.s
-${AS} -o ${OBJ}/gdts.o ${SRC}/gdt.s
+${AS} -o ${OBJ}/boot.o   			${SRC}/boot.s
+${AS} -o ${OBJ}/loader.o 			${SRC}/loader.s
+${AS} -o ${OBJ}/gdts.o 				${SRC}/gdt/gdt.s
 
-${CC} ${CFLAGS} -o ${OBJ}/io.o        -c ${SRC}/io.c
-${CC} ${CFLAGS} -o ${OBJ}/kernel.o    -c ${SRC}/kernel.c
-${CC} ${CFLAGS} -o ${OBJ}/kprintf.o   -c ${SRC}/kprintf.c
-${CC} ${CFLAGS} -o ${OBJ}/multiboot.o -c ${SRC}/multiboot.c
-${CC} ${CFLAGS} -o ${OBJ}/vga.o       -c ${SRC}/vga.c
-${CC} ${CFLAGS} -o ${OBJ}/conversions.o       -c ${SRC}/conversions.c
-${CC} ${CFLAGS} -o ${OBJ}/gdt.o -c ${SRC}/gdt.c
+${CC} ${CFLAGS} -o ${OBJ}/io.o        		-c ${SRC}/io.c
+${CC} ${CFLAGS} -o ${OBJ}/kernel.o    		-c ${SRC}/kernel.c
+${CC} ${CFLAGS} -o ${OBJ}/kprintf.o   		-c ${SRC}/kprintf.c
+${CC} ${CFLAGS} -o ${OBJ}/multiboot.o 		-c ${SRC}/multiboot.c
+${CC} ${CFLAGS} -o ${OBJ}/vga.o       		-c ${SRC}/vga.c
+${CC} ${CFLAGS} -o ${OBJ}/conversions.o     -c ${SRC}/conversions.c
+${CC} ${CFLAGS} -o ${OBJ}/gdt.o 			-c ${SRC}/gdt/gdt.c
 
 
 
