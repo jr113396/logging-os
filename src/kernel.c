@@ -1,6 +1,9 @@
 #include "globals.h"
 #include "multiboot.h"
 #include "gdt/gdt.h"
+#include "io/kprintf.h"
+#include "io/vga.h"
+#include "interupts/idt.h"
 
 void abort( ) {
    kprintf ( "\n**** ABORT! ****\n");
@@ -10,6 +13,7 @@ void abort( ) {
 
 void kmain( void* mbd, unsigned int magic ) {
    initGdt();
+   setIDT();
    vgainit  ( );
 
    clearScreen();

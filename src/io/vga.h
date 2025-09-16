@@ -1,6 +1,8 @@
 #ifndef __vgah
 #define __vgah
 
+#include "../stdint.h"
+
 #define BLACK      0x00
 #define BLUE       0x01
 #define GREEN      0x02
@@ -25,8 +27,18 @@
 #define linelen     80
 #define lines       24
 
+#define terminal_bg_colour (BLACK)
 
 static uint16_t * videoram = (uint16_t *) 0xb8000;
-size_t terminal_bg_colour = BLACK;
+
+void putchar  ( char   );
+void vgainit  ( void   );
+// void status   ( char * );
+void status(char *fmt, ...);
+void clearScreen ();
+void setcursor (int x, int y);
+void writeError(char *error);
+void putCharAtPos(char c, int xPos, int yPos, size_t fgCol, size_t bgCol);
+
 
 #endif

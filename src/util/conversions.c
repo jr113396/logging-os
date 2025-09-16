@@ -1,4 +1,4 @@
-#include "globals.h"
+#include "conversions.h"
 
 int twosComplement(int n) {
     return (n ^ 0xffffffff) + 1;

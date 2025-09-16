@@ -29,14 +29,28 @@ LDFLAGS="-nostdlib" #-nostartfiles -nodefaultlibs
 ${AS} -o ${OBJ}/boot.o   			${SRC}/boot.s
 ${AS} -o ${OBJ}/loader.o 			${SRC}/loader.s
 ${AS} -o ${OBJ}/gdts.o 				${SRC}/gdt/gdt.s
+${AS} -o ${OBJ}/idts.o 				${SRC}/interupts/idt.s
 
-${CC} ${CFLAGS} -o ${OBJ}/io.o        		-c ${SRC}/io.c
+# 			KERNEL
 ${CC} ${CFLAGS} -o ${OBJ}/kernel.o    		-c ${SRC}/kernel.c
-${CC} ${CFLAGS} -o ${OBJ}/kprintf.o   		-c ${SRC}/kprintf.c
 ${CC} ${CFLAGS} -o ${OBJ}/multiboot.o 		-c ${SRC}/multiboot.c
-${CC} ${CFLAGS} -o ${OBJ}/vga.o       		-c ${SRC}/vga.c
-${CC} ${CFLAGS} -o ${OBJ}/conversions.o     -c ${SRC}/conversions.c
+
+# 			IO
+${CC} ${CFLAGS} -o ${OBJ}/kprintf.o   		-c ${SRC}/io/kprintf.c
+${CC} ${CFLAGS} -o ${OBJ}/io.o        		-c ${SRC}/io/io.c
+${CC} ${CFLAGS} -o ${OBJ}/vga.o       		-c ${SRC}/io/vga.c
+
+#			MISC
+${CC} ${CFLAGS} -o ${OBJ}/conversions.o     -c ${SRC}/util/conversions.c
+
+#			GDT
 ${CC} ${CFLAGS} -o ${OBJ}/gdt.o 			-c ${SRC}/gdt/gdt.c
+
+#			INTERUPTS
+${CC} ${CFLAGS} -o ${OBJ}/idt.o 			-c ${SRC}/interupts/idt.c
+
+#			MEM
+${CC} ${CFLAGS} -o ${OBJ}/stdmem.o 			-c ${SRC}/mem/stdmem.c
 
 
 
@@ -50,7 +64,12 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/vga.o \
 	${OBJ}/conversions.o \
 	${OBJ}/gdts.o \
-	${OBJ}/gdt.o	
+	${OBJ}/gdt.o \
+	${OBJ}/idt.o \
+	${OBJ}/idts.o \
+	${OBJ}/stdmem.o \
+
+
 
 
 

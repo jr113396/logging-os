@@ -7,6 +7,7 @@
  *   See: http://www.gnu.org/software/grub/manual/multiboot/multiboot.html
  */
 #include "globals.h"
+#include "stdint.h"
 
 #define MBTHDR_MAGIC       0x1BADB002
 #define MBTBOOTLDR_MAGIC   0x2BADB002 /* Passed in x86 EAX register */
