@@ -1,10 +1,6 @@
 #ifndef stdinth
 #define stdinth
 
-//
-//	======================== TYPES ========================
-//
-
 typedef signed char int8_t;
 typedef unsigned char uint8_t;
 
@@ -18,5 +14,5 @@ typedef signed long long int int64_t;
 typedef unsigned long long int uint64_t;
 
 typedef unsigned long size_t;
-
+;
 #endif

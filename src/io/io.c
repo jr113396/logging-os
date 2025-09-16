@@ -8,7 +8,3 @@ outb (uint16_t port, uint8_t n) {
                 : "a" (n), "Nd" (port)  // Inputs
                 );
 }
-
-void outPortB(uint16_t port, uint8_t value) {
-    // write a byte to a port
-}
