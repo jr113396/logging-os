@@ -1,6 +1,8 @@
 #include "globals.h"
 #include "multiboot.h"
 #include "gdt/gdt.h"
+#include "io/kprintf.h"
+#include "io/vga.h"
 
 void abort( ) {
    kprintf ( "\n**** ABORT! ****\n");

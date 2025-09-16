@@ -1,6 +1,6 @@
 #include "globals.h"
 #include "multiboot.h"
-
+#include "io/kprintf.h"
 void
 getbootinfo( void* mbd, unsigned int magic ) {
    struct multiboot_info * bootinfo;
