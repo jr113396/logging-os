@@ -21,6 +21,8 @@ struct idt_ptr_s {
 void setIDT();
 void setIDTGate(uint8_t num, uint32_t offset, uint16_t segment, uint8_t flags);
 void isr_handler(struct InterruptRegisters *regs);
+void install_irq_handler (int irq, void (*handler)(struct InterruptRegisters *r));
+void uinstall_irq_handler(int irq);
 
 // isr
 extern void isr0();

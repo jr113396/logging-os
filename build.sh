@@ -52,6 +52,9 @@ ${CC} ${CFLAGS} -o ${OBJ}/idt.o 			-c ${SRC}/interupts/idt.c
 #			MEM
 ${CC} ${CFLAGS} -o ${OBJ}/stdmem.o 			-c ${SRC}/mem/stdmem.c
 
+#			PIT
+${CC} ${CFLAGS} -o ${OBJ}/pit.o 			-c ${SRC}/pit/pit.c
+
 
 
 ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
@@ -68,7 +71,7 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/idt.o \
 	${OBJ}/idts.o \
 	${OBJ}/stdmem.o \
-
+	${OBJ}/pit.o
 
 
 
