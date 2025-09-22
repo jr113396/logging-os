@@ -1,6 +1,6 @@
 #ifndef interruptRegsh
 #define interruptRegsh
-#include "../stdint.h"
+#include "stdint.h"
 struct InterruptRegisters {
     uint32_t cr2;
     uint32_t ds;

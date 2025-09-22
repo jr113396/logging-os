@@ -23,7 +23,7 @@ fi
 AS=${CPATH}/${TARGET}-as
 CC=${CPATH}/${TARGET}-gcc
 LD=${CPATH}/${TARGET}-ld
-CFLAGS="-Wall -Wextra -fno-builtin" #-Werror 
+CFLAGS="-Wall -Wextra -fno-builtin -I src/" #-Werror 
 LDFLAGS="-nostdlib" #-nostartfiles -nodefaultlibs
 
 ${AS} -o ${OBJ}/boot.o   			${SRC}/boot.s

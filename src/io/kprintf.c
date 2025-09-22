@@ -1,8 +1,8 @@
 #include <stdarg.h>
 #include "kprintf.h"
 #include "vga.h"
-#include "../util/conversions.h"
-#include "../globals.h"
+#include "util/conversions.h"
+#include "globals.h"
 
 // coverts a number n to a base and returns as a string
 // NOTE - IF base is larger than 36, it will be set to 10

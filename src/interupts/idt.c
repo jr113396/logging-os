@@ -1,6 +1,6 @@
 #include "idt.h"
-#include "../io/io.h"
-#include "../io/kprintf.h"
+#include "io/io.h"
+#include "io/kprintf.h"
 
 struct idt_value_s idt_entries[256];
 struct idt_ptr_s idt_ptr;

@@ -1,7 +1,7 @@
 #ifndef __vgah
 #define __vgah
 
-#include "../stdint.h"
+#include "stdint.h"
 
 #define BLACK      0x00
 #define BLUE       0x01

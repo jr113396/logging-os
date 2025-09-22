@@ -2,8 +2,8 @@
 #define idth
 
 #include "interuptRegs.h"
-#include "../stdint.h"
-#include "../mem/stdmem.h"
+#include "stdint.h"
+#include "mem/stdmem.h"
 
 struct idt_value_s {
     uint16_t offset_low;

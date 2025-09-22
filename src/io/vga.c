@@ -1,9 +1,9 @@
-#include "vga.h"
 #include <stdarg.h>
 #include "kprintf.h"
+#include "vga.h"
 #include "io.h"
-#include "../util/conversions.h"
-#include "../globals.h"
+#include "util/conversions.h"
+#include "globals.h"
 static int x = 0;
 static int y = 0;
 
