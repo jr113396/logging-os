@@ -1,5 +1,7 @@
 #include "pit.h"
 #include "io/kprintf.h"
+#include "io/vga.h"
+
 #include "stdint.h"
 #include "io/io.h"
 

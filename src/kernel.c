@@ -13,10 +13,11 @@ void abort( ) {
 }
 
 void kmain( void* mbd, unsigned int magic ) {
+   vgainit( );
+   clearScreen();
    initGdt();
    setIDT();
    initPit();
-   vgainit  ( );
 
    // clearScreen();
 
@@ -35,4 +36,5 @@ void kmain( void* mbd, unsigned int magic ) {
    status("3rd Year MyOs Project - Jamie Ross");
    // getbootinfo (mbd, magic);
    // abort( );
+   for (;;);
 }
