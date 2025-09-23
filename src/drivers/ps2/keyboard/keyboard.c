@@ -7,8 +7,10 @@
 
 
 bool    capslockOn  = 0,
-        shiftOn     = 0;
+        shiftOn     = 0,
+        charRead    = 0;
 
+char lastChar = ' ';
 
 void initKeyboard() {
     install_irq_handler (1, &keyboardHandler); 
@@ -58,6 +60,19 @@ void keyboardHandler(struct InterruptRegisters *regs) {
                 }
             }
     }
-// if (pressed)
-    kprintf("Key: %c, %d, pressed: %b\n", chr, code, pressed);
+    if (pressed) {
+        lastChar = chr;
+        charRead = false;
+    }
+    // kprintf("Key: %c, %d, pressed: %b\n", chr, code, pressed);
+}
+
+char getChar() {
+    while (1) {
+         // keep waiting until you get a char
+        if (!charRead) {
+            charRead = true;
+            return lastChar;
+        }
+    }
 }

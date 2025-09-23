@@ -75,27 +75,52 @@ void putcharcol (char c, int fgColour, int bgColour) {
     }
     int newX = x;
     int newY = y;
-    
+    status("");
     int controlChar = 0;
     //  status("CTRL Char %d - %d, %d, %d", c, '\n', '\r', '\0');
     switch (c) {
         case '\n':
-        newX = 0; // move to the start of the line
-        newY++; // move to the next line 
-        controlChar = 1;
-        break;
+            newX = 0; // move to the start of the line
+            newY++; // move to the next line 
+            controlChar = 1;
+            break;
         case '\r':
-        newX = 0; // move to the start of the line
-        controlChar = 1;
-        break;
+            newX = 0; // move to the start of the line
+            controlChar = 1;
+            break;
         
         case '\0':
-        controlChar = 1;   
-        break;
+            controlChar = 1;   
+            break;
         
+        case '\b':
+            controlChar = 1;
+            
+            // if at top left - do nothing 
+            if (newX == 0 && newY == 0) {
+                status("Ignoring - top left");
+                break;
+            }
+
+            // if at the start of a line, go back to up a line and to the end
+            if (newX == 0) {
+                newY--; // go up a line 
+                newX = linelen-1; // and to the end of the line
+                status("Start of line");
+
+                putCharAtPos(' ', newX, newY, fgColour, terminal_bg_colour);
+                break;
+            }
+
+            // if in middle of line, go left and write over
+            newX--;
+            status("Normal back");
+            putCharAtPos(' ', newX, newY, fgColour, terminal_bg_colour);
+            break; 
+
         default:
-        controlChar = 0;
-        break;
+            controlChar = 0;
+            break;
     }
     
     if (newY > (lines - 1)) {// 1 line reserved for status
