@@ -4,6 +4,7 @@
 #include "io.h"
 #include "util/conversions.h"
 #include "globals.h"
+
 static int x = 0;
 static int y = 0;
 
@@ -65,6 +66,28 @@ void scrollScreen() {
 }
 
 
+void terminalGotoPos(int _x, int _y) {
+    if (_x < 0 || _x > linelen) {
+        // status("X provided %d is outside of the bounds 0 - %d", _x, linelen);
+        return;
+    }
+    if (_y < 0 || _y > lines - 1) {
+        // status("Y provided %d is outside of the bounds 0 - %d", _y, lines-1);
+        return;
+    }
+    x = _x;
+    y = _y;
+    setcursor(x, y);
+
+}
+
+int terminalGetX() {
+    return x;
+}
+int terminalGetY() {
+    return y;
+}
+
 void putcharcol (char c, int fgColour, int bgColour) {
     //
     //   Store character value (with colour information) at memory location
@@ -92,6 +115,7 @@ void putcharcol (char c, int fgColour, int bgColour) {
             newY++; // move to the next line 
             controlChar = 1;
             break;
+
         case '\r':
             newX = 0; // move to the start of the line
             controlChar = 1;
@@ -135,6 +159,17 @@ void putcharcol (char c, int fgColour, int bgColour) {
             newX--;
             putCharAtPos(' ', newX, newY, fgColour, terminal_bg_colour);
             break; 
+
+        
+        case '\t':
+            controlChar = 1;
+            // go to next [tabspace] alligned column
+            status("At x %d, next tab at space %d -> %d", newX, newX + tabspace - (newX % tabspace), (newX % tabspace));
+            for (int i = 0; i < (tabspace - (newX % tabspace) - 1); i++) {
+                putchar(' ');
+            }
+            newX = x;
+            break;
 
         default:
             controlChar = 0;

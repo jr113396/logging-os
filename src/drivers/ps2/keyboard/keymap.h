@@ -5,41 +5,41 @@
 
 
 
-const uint32_t  UNMAP   = 0xFFFFFFFF - 0;
-const uint32_t  ESC     = 0xFFFFFFFF - 1;
-const uint32_t  LCTRL   = 0xFFFFFFFF - 2;
-const uint32_t  LSHIFT  = 0xFFFFFFFF - 3;
-const uint32_t  RSHIFT  = 0xFFFFFFFF - 4;
-const uint32_t  ALT     = 0xFFFFFFFF - 5;
-const uint32_t  SPACE   = ' ';//0xFFFFFFFF - 6;
-const uint32_t  CAPS    = 0xFFFFFFFF - 7;
-const uint32_t  F1      = 0xFFFFFFFF - 8;
-const uint32_t  F2      = 0xFFFFFFFF - 9;
-const uint32_t  F3      = 0xFFFFFFFF - 10;
-const uint32_t  F4      = 0xFFFFFFFF - 11;
-const uint32_t  F5      = 0xFFFFFFFF - 12;
-const uint32_t  F6      = 0xFFFFFFFF - 13;
-const uint32_t  F7      = 0xFFFFFFFF - 14;
-const uint32_t  F8      = 0xFFFFFFFF - 15;
-const uint32_t  F9      = 0xFFFFFFFF - 16;
-const uint32_t  F10     = 0xFFFFFFFF - 17;
-const uint32_t  F11     = 0xFFFFFFFF - 18;
-const uint32_t  F12     = 0xFFFFFFFF - 19;
-const uint32_t  NUMLCK  = 0xFFFFFFFF - 20;
-const uint32_t  SCRLLCK = 0xFFFFFFFF - 21;
-const uint32_t  HOME    = 0xFFFFFFFF - 22;
-const uint32_t  UP      = 0xFFFFFFFF - 23;
-const uint32_t  DOWN    = 0xFFFFFFFF - 24;
-const uint32_t  LEFT    = 0xFFFFFFFF - 25;
-const uint32_t  RIGHT   = 0xFFFFFFFF - 26;
-const uint32_t  PAGEUP  = 0xFFFFFFFF - 27;
-const uint32_t  PAGEDN  = 0xFFFFFFFF - 28;
-const uint32_t  END     = 0xFFFFFFFF - 29;
-const uint32_t  INS     = 0xFFFFFFFF - 30;
-const uint32_t  DEL     = 0xFFFFFFFF - 31;
+const uint8_t  UNMAP   = 0xFF - 0;
+const uint8_t  ESC     = 0xFF - 1;
+const uint8_t  LCTRL   = 0xFF - 2;
+const uint8_t  LSHIFT  = 0xFF - 3;
+const uint8_t  RSHIFT  = 0xFF - 4;
+const uint8_t  ALT     = 0xFF - 5;
+const uint8_t  SPACE   = ' ';//0xFF - 6;
+const uint8_t  CAPS    = 0xFF - 7;
+const uint8_t  F1      = 0xFF - 8;
+const uint8_t  F2      = 0xFF - 9;
+const uint8_t  F3      = 0xFF - 10;
+const uint8_t  F4      = 0xFF - 11;
+const uint8_t  F5      = 0xFF - 12;
+const uint8_t  F6      = 0xFF - 13;
+const uint8_t  F7      = 0xFF - 14;
+const uint8_t  F8      = 0xFF - 15;
+const uint8_t  F9      = 0xFF - 16;
+const uint8_t  F10     = 0xFF - 17;
+const uint8_t  F11     = 0xFF - 18;
+const uint8_t  F12     = 0xFF - 19;
+const uint8_t  NUMLCK  = 0xFF - 20;
+const uint8_t  SCRLLCK = 0xFF - 21;
+const uint8_t  HOME    = 0xFF - 22;
+const uint8_t  UP      = 0xFF - 23;
+const uint8_t  DOWN    = 0xFF - 24;
+const uint8_t  LEFT    = 0xFF - 25;
+const uint8_t  RIGHT   = 0xFF - 26;
+const uint8_t  PAGEUP  = 0xFF - 27;
+const uint8_t  PAGEDN  = 0xFF - 28;
+const uint8_t  END     = 0xFF - 29;
+const uint8_t  INS     = 0xFF - 30;
+const uint8_t  DEL     = 0xFF - 31;
 
 
-const uint32_t lowercaseMap[128] = {
+const uint8_t lowercaseMap[128] = {
     UNMAP,
     ESC,
     '1',
@@ -170,12 +170,12 @@ const uint32_t lowercaseMap[128] = {
     UNMAP
 };
 
-const uint32_t shiftMap[128] = {
+const uint8_t shiftMap[128] = {
     UNMAP,
     ESC,
     '!',
     '"',
-    '£', 
+    '3',//'£', -- TO FIX
     '$',
     '%',
     '^',
@@ -212,7 +212,7 @@ const uint32_t shiftMap[128] = {
     'L',
     ':',
     '@',   // 40
-    '¬',    // 41
+    '`', // - TO FIX'¬',    // 41
     LSHIFT, // 42
     '~',    // 43
     'Z',
@@ -301,7 +301,7 @@ const uint32_t shiftMap[128] = {
     UNMAP
 };
 
-const uint32_t capsMap[128] = {
+const uint8_t capsMap[128] = {
     UNMAP,
     ESC,
     '1',
@@ -432,12 +432,12 @@ const uint32_t capsMap[128] = {
     UNMAP
 };
 
-const uint32_t shiftCapsMap[128] = {
+const uint8_t shiftCapsMap[128] = {
     UNMAP,
     ESC,
     '!',
     '"',
-    '£',
+    '3', // '£', - TO FIX
     '$',
     '%',
     '^',
@@ -474,7 +474,7 @@ const uint32_t shiftCapsMap[128] = {
     'l',
     ':',
     '@',   // 40
-    '¬',    // 41
+    '`', //'¬', - TO FIX    // 41
     LSHIFT, // 42
     '~',    // 43
     'z',

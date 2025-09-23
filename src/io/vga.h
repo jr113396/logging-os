@@ -26,9 +26,9 @@
 
 #define linelen     80
 #define lines       24
+#define tabspace 4
 
 #define terminal_bg_colour (BLACK)
-
 static uint16_t * videoram = (uint16_t *) 0xb8000;
 
 void putchar  ( char   );
@@ -40,5 +40,8 @@ void setcursor (int x, int y);
 void writeError(char *error);
 void putCharAtPos(char c, int xPos, int yPos, size_t fgCol, size_t bgCol);
 
+int terminalGetX();
+int terminalGetY();
+void terminalGotoPos(int _x, int _y);
 
 #endif
