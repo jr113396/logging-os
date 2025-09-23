@@ -32,6 +32,14 @@ void clearScreen() {
 
 }
 
+char getCharAtPos(int xPos, int yPos) {
+    uint16_t * screenp = (videoram) + (linelen * yPos) + (xPos);
+   
+    // draw char at pos with given values
+    char c = *screenp;
+    return c & 0xFF;
+}
+
 // Write an error
 // currently writes to status, may change
 void writeError(char *error) {
@@ -75,8 +83,8 @@ void putcharcol (char c, int fgColour, int bgColour) {
     }
     int newX = x;
     int newY = y;
-    status("");
     int controlChar = 0;
+    int foundSpace = 0;
     //  status("CTRL Char %d - %d, %d, %d", c, '\n', '\r', '\0');
     switch (c) {
         case '\n':
@@ -95,26 +103,36 @@ void putcharcol (char c, int fgColour, int bgColour) {
         
         case '\b':
             controlChar = 1;
-            
+            foundSpace = 0;
             // if at top left - do nothing 
             if (newX == 0 && newY == 0) {
-                status("Ignoring - top left");
                 break;
             }
 
             // if at the start of a line, go back to up a line and to the end
             if (newX == 0) {
                 newY--; // go up a line 
-                newX = linelen-1; // and to the end of the line
-                status("Start of line");
 
+                for (int i = linelen-1; i >= 0; i--) {
+                    char c = getCharAtPos(i, newY);
+                    if (c == ' ') {
+                        foundSpace++;
+                        continue;
+                    }
+                    else
+                        break;
+                }
+                if (foundSpace > 2)
+                    newX = (linelen - foundSpace);
+                else
+                    newX = linelen-1; // and to the end of the line
+                
                 putCharAtPos(' ', newX, newY, fgColour, terminal_bg_colour);
                 break;
             }
 
             // if in middle of line, go left and write over
             newX--;
-            status("Normal back");
             putCharAtPos(' ', newX, newY, fgColour, terminal_bg_colour);
             break; 
 
