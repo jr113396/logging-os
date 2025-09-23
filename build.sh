@@ -55,6 +55,8 @@ ${CC} ${CFLAGS} -o ${OBJ}/stdmem.o 			-c ${SRC}/mem/stdmem.c
 #			PIT
 ${CC} ${CFLAGS} -o ${OBJ}/pit.o 			-c ${SRC}/pit/pit.c
 
+#			PS2 Keyboard Driver
+${CC} ${CFLAGS} -o ${OBJ}/keyboard-driver.o -c ${SRC}/drivers/ps2/keyboard/keyboard.c
 
 
 ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
@@ -71,7 +73,8 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/idt.o \
 	${OBJ}/idts.o \
 	${OBJ}/stdmem.o \
-	${OBJ}/pit.o
+	${OBJ}/pit.o \
+	${OBJ}/keyboard-driver.o
 
 
 

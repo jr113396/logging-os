@@ -59,8 +59,8 @@ extern void isr30();
 extern void isr31();
 
 // irqs
-extern void irq0();
-extern void irq1();
+extern void irq0(); // pit
+extern void irq1(); // keyboard
 extern void irq2();
 extern void irq3();
 extern void irq4();

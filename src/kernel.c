@@ -5,6 +5,7 @@
 #include "io/vga.h"
 #include "interupts/idt.h"
 #include "pit/pit.h"
+#include "drivers/ps2/keyboard/keyboard.h"
 
 void abort( ) {
    kprintf ( "\n**** ABORT! ****\n");
@@ -18,6 +19,7 @@ void kmain( void* mbd, unsigned int magic ) {
    initGdt();
    setIDT();
    initPit();
+   initKeyboard();
 
    // clearScreen();
 
