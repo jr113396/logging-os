@@ -7,4 +7,6 @@ void keyboardHandler(struct InterruptRegisters *regs);
 void initKeyboard();
 
 char getChar();
+
+int isKeyPressed(uint8_t c);
 #endif

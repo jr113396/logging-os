@@ -57,6 +57,7 @@ ${CC} ${CFLAGS} -o ${OBJ}/pit.o 			-c ${SRC}/pit/pit.c
 
 #			PS2 Keyboard Driver
 ${CC} ${CFLAGS} -o ${OBJ}/keyboard-driver.o -c ${SRC}/drivers/ps2/keyboard/keyboard.c
+${CC} ${CFLAGS} -o ${OBJ}/keymap.o -c ${SRC}/drivers/ps2/keyboard/keymap.c
 
 #			Apps
 ${CC} ${CFLAGS} -o ${OBJ}/apps-echo.o -c ${SRC}/apps/echo.c
@@ -77,6 +78,7 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/stdmem.o \
 	${OBJ}/pit.o \
 	${OBJ}/keyboard-driver.o \
+	${OBJ}/keymap.o \
 	${OBJ}/apps-echo.o
 
 
