@@ -4,6 +4,7 @@
 #include "io.h"
 #include "util/conversions.h"
 #include "globals.h"
+
 static int x = 0;
 static int y = 0;
 
@@ -32,6 +33,14 @@ void clearScreen() {
 
 }
 
+char getCharAtPos(int xPos, int yPos) {
+    uint16_t * screenp = (videoram) + (linelen * yPos) + (xPos);
+   
+    // draw char at pos with given values
+    char c = *screenp;
+    return c & 0xFF;
+}
+
 // Write an error
 // currently writes to status, may change
 void writeError(char *error) {
@@ -57,6 +66,28 @@ void scrollScreen() {
 }
 
 
+void terminalGotoPos(int _x, int _y) {
+    if (_x < 0 || _x > linelen) {
+        // status("X provided %d is outside of the bounds 0 - %d", _x, linelen);
+        return;
+    }
+    if (_y < 0 || _y > lines - 1) {
+        // status("Y provided %d is outside of the bounds 0 - %d", _y, lines-1);
+        return;
+    }
+    x = _x;
+    y = _y;
+    setcursor(x, y);
+
+}
+
+int terminalGetX() {
+    return x;
+}
+int terminalGetY() {
+    return y;
+}
+
 void putcharcol (char c, int fgColour, int bgColour) {
     //
     //   Store character value (with colour information) at memory location
@@ -75,27 +106,74 @@ void putcharcol (char c, int fgColour, int bgColour) {
     }
     int newX = x;
     int newY = y;
-    
     int controlChar = 0;
+    int foundSpace = 0;
     //  status("CTRL Char %d - %d, %d, %d", c, '\n', '\r', '\0');
     switch (c) {
         case '\n':
-        newX = 0; // move to the start of the line
-        newY++; // move to the next line 
-        controlChar = 1;
-        break;
+            newX = 0; // move to the start of the line
+            newY++; // move to the next line 
+            controlChar = 1;
+            break;
+
         case '\r':
-        newX = 0; // move to the start of the line
-        controlChar = 1;
-        break;
+            newX = 0; // move to the start of the line
+            controlChar = 1;
+            break;
         
         case '\0':
-        controlChar = 1;   
-        break;
+            controlChar = 1;   
+            break;
         
+        case '\b':
+            controlChar = 1;
+            foundSpace = 0;
+            // if at top left - do nothing 
+            if (newX == 0 && newY == 0) {
+                break;
+            }
+
+            // if at the start of a line, go back to up a line and to the end
+            if (newX == 0) {
+                newY--; // go up a line 
+
+                for (int i = linelen-1; i >= 0; i--) {
+                    char c = getCharAtPos(i, newY);
+                    if (c == ' ') {
+                        foundSpace++;
+                        continue;
+                    }
+                    else
+                        break;
+                }
+                if (foundSpace > 2)
+                    newX = (linelen - foundSpace);
+                else
+                    newX = linelen-1; // and to the end of the line
+                
+                putCharAtPos(' ', newX, newY, fgColour, terminal_bg_colour);
+                break;
+            }
+
+            // if in middle of line, go left and write over
+            newX--;
+            putCharAtPos(' ', newX, newY, fgColour, terminal_bg_colour);
+            break; 
+
+        
+        case '\t':
+            controlChar = 1;
+            // go to next [tabspace] alligned column
+            status("At x %d, next tab at space %d -> %d", newX, newX + tabspace - (newX % tabspace), (newX % tabspace));
+            for (int i = 0; i < (tabspace - (newX % tabspace) - 1); i++) {
+                putchar(' ');
+            }
+            newX = x;
+            break;
+
         default:
-        controlChar = 0;
-        break;
+            controlChar = 0;
+            break;
     }
     
     if (newY > (lines - 1)) {// 1 line reserved for status

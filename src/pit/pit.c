@@ -8,7 +8,7 @@
 int noPitsHandled = 0;
 
 void pitHandler(struct InterruptRegisters *regs) {
-    kprintf("Pit Handler no %d\n", noPitsHandled++);
+    // kprintf("Pit Handler no %d\n", noPitsHandled++);
 }
 
 void initPit() {
