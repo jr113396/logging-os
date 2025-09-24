@@ -4,7 +4,8 @@
 #include "drivers/ps2/keyboard/keyboard.h"
 #include "drivers/ps2/keyboard/keymap.h"
 
-void echo() {
+void echoInit() {
+    kprintf("ECHO\n");
     for (;;) {
         uint8_t c = getChar();
         status("SHIFT %d, CTRL %d", isKeyPressed(LSHIFT), isKeyPressed(LCTRL));
@@ -44,7 +45,14 @@ void echo() {
                     break;
             }
         }
-        else 
+        else if (isKeyPressed(LCTRL)){
+            switch (c) {
+                case 'c':
+                    status("CTRL + C Pressed");
+                    return;
+            }
+        }
+        else
             kprintf("%c", c);
     }
 }

@@ -3,6 +3,7 @@
 #include "vga.h"
 #include "util/conversions.h"
 #include "globals.h"
+#include "string.h"
 
 // coverts a number n to a base and returns as a string
 // NOTE - IF base is larger than 36, it will be set to 10
@@ -46,32 +47,21 @@ char *itoa(unsigned long n) {
     return _itoa(n, 1, 10);
 }
 
-// returns the number of characters in a null terminated string
-// s - null terminated string
-int kstrlen(char *s) {
-    char *start = s;
-    int i = 0;
-    while (*start++) i++;
-            // kprintf("%d\n", i);
-
-    return i;
-}
-
 // outputs a string, str, and padds it to width using paddingChar if strlen(str) < width
 char *outstr(char *str, int width, char paddingChar) {
     static char buf[STRING_BUFFER_SIZE];
-    if (kstrlen(str) > width) {
+    if (strlen(str) > width) {
         return str;
     }
-    int space = width - kstrlen(str);
+    int space = width - strlen(str);
 
     for (int i = 0; i < space; i++) {
         buf[i] = paddingChar;
     }
-    for (int i = 0; i < kstrlen(str); i ++) {
+    for (int i = 0; i < strlen(str); i ++) {
         buf[space + i] = str[i];
     }
-    buf[space + kstrlen(str)] = '\0';
+    buf[space + strlen(str)] = '\0';
     return buf;
 }
 
