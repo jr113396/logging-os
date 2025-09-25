@@ -20,4 +20,6 @@
 void pitHandler(struct InterruptRegisters *regs);
 
 void initPit();
+void pauseTicks(uint32_t noTicks);
+void pauseTimeMs(uint32_t ms) ;
 #endif
