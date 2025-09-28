@@ -24,9 +24,10 @@
 #define FOREGROUND(C) ((C) <<  8)
 
 
-#define linelen     80
-#define lines       24
-#define tabspace 4
+#define linelen     (80)
+#define statusBreak (40)
+#define lines       (24)
+#define tabspace    (4)
 
 #define terminal_bg_colour (BLACK)
 static uint16_t * videoram = (uint16_t *) 0xb8000;
@@ -35,6 +36,8 @@ void putchar  ( char   );
 void vgainit  ( void   );
 // void status   ( char * );
 void status(char *fmt, ...);
+void lStatus(char *fmt, ...);
+void rStatus(char *fmt, ...);
 void clearScreen ();
 void setcursor (int x, int y);
 void writeError(char *error);

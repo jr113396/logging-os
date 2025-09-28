@@ -135,7 +135,7 @@ uint32_t getStr(char *addr, uint32_t maxLen) {
             // }
 
                 if (pos >= maxLen - 1) {
-                    status("Input too long max %d", maxLen -1);
+                    lStatus("Input too long max %d", maxLen -1);
                     continue;
                 }
                 addr[pos++] = c;
@@ -143,7 +143,7 @@ uint32_t getStr(char *addr, uint32_t maxLen) {
             }
             
             kprintf("%c", c);
-            status("POS = %d, c = %c %d", pos,c, c);
+            rStatus("POS = %d, c = %c -> %d", pos,c, c);
         }
     // return the number of characters saved in addr 
     return pos;

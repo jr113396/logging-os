@@ -63,6 +63,7 @@ ${CC} ${CFLAGS} -o ${OBJ}/keymap.o -c ${SRC}/drivers/ps2/keyboard/keymap.c
 #			Apps
 ${CC} ${CFLAGS} -o ${OBJ}/apps-echo.o -c ${SRC}/apps/echo.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-terminal.o -c ${SRC}/apps/terminal.c
+${CC} ${CFLAGS} -o ${OBJ}/apps-game-of-life.o -c ${SRC}/apps/gameOfLife.c
 
 ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/boot.o \
@@ -83,7 +84,8 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/keyboard-driver.o \
 	${OBJ}/keymap.o \
 	${OBJ}/apps-echo.o \
-	${OBJ}/apps-terminal.o
+	${OBJ}/apps-terminal.o \
+	${OBJ}/apps-game-of-life.o
 
 
 
