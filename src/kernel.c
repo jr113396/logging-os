@@ -38,10 +38,10 @@ void kmain( void* mbd, unsigned int magic ) {
    // kprintf("short\n");   
 
    status("3rd Year MyOs Project - Jamie Ross");
-   getbootinfo (mbd, magic);
-   abort( );
+   // getbootinfo (mbd, magic);
+   // abort( );
 
    // echo();
-   // initTerminal();
+   initTerminal();
    // for (;;);
 }
