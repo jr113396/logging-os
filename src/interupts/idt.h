@@ -1,6 +1,9 @@
 #ifndef idth
 #define idth
 
+// with help from https://www.youtube.com/watch?v=pfj95yQbF4M and https://wiki.osdev.org/Interrupt_Descriptor_Table
+// for idt.c, idt.h, idt.s
+
 #include "interuptRegs.h"
 #include "stdint.h"
 #include "mem/stdmem.h"

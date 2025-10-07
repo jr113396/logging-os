@@ -1,4 +1,5 @@
 // with lots of help from https://www.youtube.com/watch?v=jwulDRMQ53I and https://wiki.osdev.org/GDT_Tutorial 
+// for gdt.c, gdt.h, gdt.s
 
 #ifndef gdth
 #define gdth
