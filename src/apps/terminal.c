@@ -9,15 +9,19 @@
 #include "apps/gameOfLife.h"
 #include "apps/app.h"
 
+struct appStruct apps[4];
+uint8_t noCommands = 4;
+
+
 void rstTerminal() {
     clearScreen();
     terminalGotoPos(0,0);
     kprintf("TERMINAL\n");
 }
 
-void helpTerminal(struct appStruct apps[], uint8_t noApps) {
+void helpTerminal() {
     kprintf("\nAvailable Commands are:\n");
-    for (int app = 0; app < noApps; app++) {
+    for (int app = 0; app < noCommands; app++) {
         kprintf("%s\n",apps[app].help);
     }
 }
@@ -43,16 +47,14 @@ void setApp(struct appStruct apps[], uint8_t pos, char **appNames, uint8_t noNam
 
 void initTerminal() {
     char buffer[81];
-    uint8_t noCommands = 4;
-    struct appStruct apps[4];
     char *app1Names[] = {"echo"};
     char *app2Names[] =  {"clear", "cls", "rst"};
     char *app3Names[] = {"help"};
     char *app4Names[] = {"game", "game of life"};
-    setApp(apps, 0, app1Names, 1, "Echo -> Enter the echo mode", &echoInit, 1);
-    setApp(apps, 1, app2Names, 3,  "Clear -> Clears the screen and resets the cursor", &rstTerminal, 0);
-    setApp(apps, 2, app3Names, 1, "Help -> print help for all apps", &helpTerminal, 0);
-    setApp(apps, 3, app4Names, 2, "Game -> an implmentation of the game of life", &initGameOfLife, 1);
+    setApp(apps, 0, app1Names, 1, "Echo \t-> Enter the echo mode", &echoInit, 1);
+    setApp(apps, 1, app2Names, 3,  "Clear \t-> Clears the screen and resets the cursor", &rstTerminal, 0);
+    setApp(apps, 2, app3Names, 1, "Help \t-> print help for all apps", &helpTerminal, 0);
+    setApp(apps, 3, app4Names, 2, "Game \t-> an implmentation of the game of life", &initGameOfLife, 1);
 
     // char *commands[] = {"echo", "clear", "help", "game"};
     // void *cmdFuncs[] = {

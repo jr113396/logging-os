@@ -15,7 +15,7 @@ void *memcpy(void *dst, void *src, uint32_t count) {
     
     char *s = src;
     char *d = dst;
-    for (int i = 0; i < count; i++)
+    for (uint32_t i = 0; i < count; i++)
         *d++ = *s++;
     // int num64s = count / sizeof(uint64_t);    
     // {

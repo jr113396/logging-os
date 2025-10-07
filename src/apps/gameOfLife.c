@@ -53,15 +53,6 @@ uint8_t getNoAliveneighbours(uint8_t *current, int x, int y) {
     // if (y == game_rows - 1) // bottom bound
     //     onBoundry |= 1 << 1;
 
-    uint8_t a = 0,
-            b = 0,
-            c = 0,
-            d = 0,
-            e = 0,
-            f = 0,
-            g = 0,
-            h = 0;
-
         // above
     if (!((y == 0) && (x == 0)))// top left 
         noAlive += isSquareAlive(current, x-1, y-1);
@@ -87,7 +78,7 @@ uint8_t getNoAliveneighbours(uint8_t *current, int x, int y) {
     return noAlive;
 }
 
-void genNextState(uint8_t *current, char *next) {
+void genNextState(uint8_t *current, uint8_t *next) {
     for (int x = 0; x < game_linelen; x++) {
         for (int y = 0; y < game_rows; y++) {
             uint8_t alive = getNoAliveneighbours(current, x, y);
@@ -99,11 +90,11 @@ void genNextState(uint8_t *current, char *next) {
 
                 else // dies from overpopulation
                     setMapVal(next, x, y, deadVal);
-            } else // currently dead
+            } else { // currently dead
                 if (alive == 3) // repopulation
                     lStatus("repopulation %d", alive);
                     setMapVal(next, x, y, aliveVal);
-
+            }
         }
     }
 }
