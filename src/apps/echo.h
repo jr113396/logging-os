@@ -1,6 +1,6 @@
 #ifndef appEchoh
 #define appEchoh
 
-void echo();
+void echoInit();
 
 #endif

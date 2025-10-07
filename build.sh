@@ -34,6 +34,7 @@ ${AS} -o ${OBJ}/idts.o 				${SRC}/interupts/idt.s
 # 			KERNEL
 ${CC} ${CFLAGS} -o ${OBJ}/kernel.o    		-c ${SRC}/kernel.c
 ${CC} ${CFLAGS} -o ${OBJ}/multiboot.o 		-c ${SRC}/multiboot.c
+${CC} ${CFLAGS} -o ${OBJ}/string.o		-c ${SRC}/string.c
 
 # 			IO
 ${CC} ${CFLAGS} -o ${OBJ}/kprintf.o   		-c ${SRC}/io/kprintf.c
@@ -57,14 +58,18 @@ ${CC} ${CFLAGS} -o ${OBJ}/pit.o 			-c ${SRC}/pit/pit.c
 
 #			PS2 Keyboard Driver
 ${CC} ${CFLAGS} -o ${OBJ}/keyboard-driver.o -c ${SRC}/drivers/ps2/keyboard/keyboard.c
+${CC} ${CFLAGS} -o ${OBJ}/keymap.o -c ${SRC}/drivers/ps2/keyboard/keymap.c
 
 #			Apps
 ${CC} ${CFLAGS} -o ${OBJ}/apps-echo.o -c ${SRC}/apps/echo.c
+${CC} ${CFLAGS} -o ${OBJ}/apps-terminal.o -c ${SRC}/apps/terminal.c
+${CC} ${CFLAGS} -o ${OBJ}/apps-game-of-life.o -c ${SRC}/apps/gameOfLife.c
 
 ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/boot.o \
 	${OBJ}/loader.o \
 	${OBJ}/kernel.o \
+	${OBJ}/string.o \
 	${OBJ}/io.o \
 	${OBJ}/kprintf.o \
 	${OBJ}/multiboot.o \
@@ -77,7 +82,10 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/stdmem.o \
 	${OBJ}/pit.o \
 	${OBJ}/keyboard-driver.o \
-	${OBJ}/apps-echo.o
+	${OBJ}/keymap.o \
+	${OBJ}/apps-echo.o \
+	${OBJ}/apps-terminal.o \
+	${OBJ}/apps-game-of-life.o
 
 
 

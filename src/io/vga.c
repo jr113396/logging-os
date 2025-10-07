@@ -4,6 +4,7 @@
 #include "io.h"
 #include "util/conversions.h"
 #include "globals.h"
+#include "mem/stdmem.h"
 
 static int x = 0;
 static int y = 0;
@@ -96,12 +97,12 @@ void putcharcol (char c, int fgColour, int bgColour) {
     
     // check if the entered foreground colour is invalid
     if (fgColour < BLACK || fgColour > WHITE) {
-        status("Invalid foreground colour entered: %d", fgColour);
+        lStatus("Invalid foreground colour entered: %d", fgColour);
         return;
     }
     
     if (bgColour < BLACK || bgColour > WHITE) {
-        status("Invalid background colour entered: %d", bgColour);
+        lStatus("Invalid background colour entered: %d", bgColour);
         return;
     }
     int newX = x;
@@ -164,7 +165,7 @@ void putcharcol (char c, int fgColour, int bgColour) {
         case '\t':
             controlChar = 1;
             // go to next [tabspace] alligned column
-            status("At x %d, next tab at space %d -> %d", newX, newX + tabspace - (newX % tabspace), (newX % tabspace));
+            lStatus("At x %d, next tab at space %d -> %d", newX, newX + tabspace - (newX % tabspace), (newX % tabspace));
             for (int i = 0; i < (tabspace - (newX % tabspace) - 1); i++) {
                 putchar(' ');
             }
@@ -410,4 +411,369 @@ void status(char *fmt, ...) {
    y = originalY;
    setcursor (x, y);
    va_end(ap);
+}
+
+
+void lStatus(char *fmt, ...) {
+   va_list ap;
+    uint32_t    leftBgCol = WHITE,
+                leftFgCol = GREEN;
+   char clearStatus = 1; // clear the status line before writing a new one
+   int maxNoDigits = statusBreak - 1;
+   if (clearStatus) {
+      for (int i = 0; i < maxNoDigits; i++) {
+         *(videoram + (linelen * lines) + (i)) = ' ';
+      }
+   }
+
+    int d;
+    char c, *s;
+    int prev = 0, // specifies if the previous char was a control character '%'
+        isSigned = 1 ; // Indicates that the following integer type b, d, o, or x should be treated as an unsigned value 
+    
+    char widthDigits[STRING_BUFFER_SIZE]; // for storing the digits to specify the width of a string to be printed
+    int digitLocation = 0; // for indexing into widthDigits
+    for (int i = 0; i < STRING_BUFFER_SIZE; i++) { // reset the values in the array to 0
+        widthDigits[i] = 0;
+    }
+
+    if (!fmt) return;
+
+    int originalX = x;
+    int originalY = y;
+
+    x = 0;
+    y = lines;
+
+    uint16_t *screenp = (videoram) + (linelen * y) + (x);
+    uint16_t noDigitsPrinted = 0;
+    va_start(ap, fmt);
+    while (*fmt) {
+        char chr = *fmt;
+        *fmt++;
+        if (chr == '%') {              /* control */
+            if (prev) {
+               *screenp++ = '%' | FOREGROUND(leftFgCol) | BACKGROUND(leftBgCol);
+
+               prev = 0;
+               continue;
+            }
+            prev = 1;
+            isSigned = 1; // treat all numbers as signed unless otherwise told
+            digitLocation = 0; // reset to start of the array
+            continue;
+        }
+        if (chr == 's') {              /* string */
+            if (prev) {
+                s = va_arg(ap, char *);
+                s = outstr(s, strToInt(widthDigits), ' ');
+                prev = 0;
+                while (*s) {
+                  *screenp++ = *s | FOREGROUND(leftFgCol) | BACKGROUND(leftBgCol);
+                  s++;
+                }
+                continue;
+            }
+        }
+        if (chr == 'd') {            /* int */
+            if (prev) {
+                d = va_arg(ap, int);
+                prev = 0;
+                // printf("Digits: %s. -- %d\n", widthDigits,  strToInt(widthDigits));
+
+                char *s = _itoa(d, isSigned, 10);
+                s = outstr(s, strToInt(widthDigits), '0');
+                // printf("a: '%s'\n", outstr(s, strToInt(widthDigits), '0'));
+                while (*s) {
+                  *screenp++ = *s | FOREGROUND(leftFgCol) | BACKGROUND(leftBgCol);
+                    s++;
+                }
+                continue;
+            }
+        }
+        if (chr == 'b') {            /* binary */
+            if (prev) {
+               d = va_arg(ap, int);
+               prev = 0;
+               char *s = _itoa(d, isSigned, 2);
+               s = outstr(s, strToInt(widthDigits), ' ');
+
+               while (*s) {
+                  *screenp++ = *s | FOREGROUND(leftFgCol) | BACKGROUND(leftBgCol);
+                  s++;
+               }
+               continue;
+            }
+        }
+        if (chr == 'o') {            /* octal */
+            if (prev) {
+               d = va_arg(ap, int);
+               prev = 0;
+               char *s = _itoa(d, isSigned, 8);
+               s = outstr(s, strToInt(widthDigits), ' ');
+
+               while (*s) {
+                  *screenp++ = *s | FOREGROUND(leftFgCol) | BACKGROUND(leftBgCol);
+                  s++;
+               }
+               continue;
+            }
+        }
+        if (chr == 'x') {            /* hex */
+            if (prev) {
+               d = va_arg(ap, int);
+               prev = 0;
+               char *s = _itoa(d, isSigned, 16);
+               s = outstr(s, strToInt(widthDigits), ' ');
+
+               while (*s) {
+                  *screenp++ = *s | FOREGROUND(leftFgCol) | BACKGROUND(leftBgCol);
+                  s++;
+               }
+               continue;
+            }
+        }
+        if (chr == 'c') {              /* char */
+            /* need a cast here since va_arg only
+            takes fully promoted types */
+            if (prev) {
+               c = (char) va_arg(ap, int);
+               prev = 0;
+               *screenp++ = c | FOREGROUND(leftFgCol) | BACKGROUND(leftBgCol);
+               continue;
+
+            }
+        }
+
+        if (chr == 'u') {              /* unsigned */
+            if (prev) {
+                isSigned = 0; // set as unsigned - not the default
+                continue;
+            }
+        }
+
+        if (chr >= '0' && chr <= '9') {
+            if (prev) {
+                widthDigits[digitLocation] = chr;
+                digitLocation++;
+
+                widthDigits[digitLocation] = '\0';
+                continue;
+            }
+        }
+
+        *screenp++ = chr | FOREGROUND(leftFgCol) | BACKGROUND(leftBgCol);
+        if (++noDigitsPrinted > maxNoDigits) {
+            // printed more chars than space
+            // so break and dont print the rest
+            break;
+        }
+    }
+
+   x = originalX;
+   y = originalY;
+   setcursor (x, y);
+   va_end(ap);
+}
+
+void rStatus(char *fmt, ...) {
+   va_list ap;
+   uint32_t rightBgCol = BLACK,
+            rightFgCol = RED;
+
+//    uint16_t buffer[linelen - statusBreak];
+   char clearStatus = 1; // clear the status line before writing a new one
+   int maxNoDigits = linelen - statusBreak;
+   if (clearStatus) {
+      for (int i = 0; i < maxNoDigits; i++) {
+         *(videoram + (linelen * lines) + (i) + statusBreak) = ' ';
+      }
+   }
+
+   uint16_t buffer[maxNoDigits]; // make a buffer to write chars into
+
+    int d;
+    char c, *s;
+    int prev = 0, // specifies if the previous char was a control character '%'
+        isSigned = 1 ; // Indicates that the following integer type b, d, o, or x should be treated as an unsigned value 
+    
+    char widthDigits[STRING_BUFFER_SIZE]; // for storing the digits to specify the width of a string to be printed
+    int digitLocation = 0; // for indexing into widthDigits
+    for (int i = 0; i < STRING_BUFFER_SIZE; i++) { // reset the values in the array to 0
+        widthDigits[i] = 0;
+    }
+
+    if (!fmt) return;
+
+    int originalX = x;
+    int originalY = y;
+
+    x = 0;
+    y = lines;
+
+    uint16_t *screenp = buffer;//(videoram) + (linelen * y) + (x) + (statusBreak);
+    uint16_t noDigitsPrinted = 0;
+    va_start(ap, fmt);
+    while (*fmt) {
+        char chr = *fmt;
+        *fmt++;
+        if (chr == '%') {              /* control */
+            if (prev) {
+                *screenp++ = *s++ | FOREGROUND(rightFgCol) | BACKGROUND(rightBgCol);
+                if (++noDigitsPrinted > maxNoDigits) {
+                    // printed more chars than space
+                    // so break and dont print the rest
+                    break;
+                }
+               prev = 0;
+               continue;
+            }
+            prev = 1;
+            isSigned = 1; // treat all numbers as signed unless otherwise told
+            digitLocation = 0; // reset to start of the array
+            continue;
+        }
+        if (chr == 's') {              /* string */
+            if (prev) {
+                s = va_arg(ap, char *);
+                s = outstr(s, strToInt(widthDigits), ' ');
+                prev = 0;
+                while (*s) {
+                    *screenp++ = *s++ | FOREGROUND(rightFgCol) | BACKGROUND(rightBgCol);
+                    if (++noDigitsPrinted > maxNoDigits) {
+                        // printed more chars than space
+                        // so break and dont print the rest
+                        break;
+                    }
+                }
+                continue;
+            }
+        }
+        if (chr == 'd') {            /* int */
+            if (prev) {
+                d = va_arg(ap, int);
+                prev = 0;
+                // printf("Digits: %s. -- %d\n", widthDigits,  strToInt(widthDigits));
+
+                char *s = _itoa(d, isSigned, 10);
+                s = outstr(s, strToInt(widthDigits), '0');
+                // printf("a: '%s'\n", outstr(s, strToInt(widthDigits), '0'));
+                while (*s) {
+                    *screenp++ = *s++ | FOREGROUND(rightFgCol) | BACKGROUND(rightBgCol);
+                    if (++noDigitsPrinted > maxNoDigits) {
+                        // printed more chars than space
+                        // so break and dont print the rest
+                        break;
+                    }
+                }
+                continue;
+            }
+        }
+        if (chr == 'b') {            /* binary */
+            if (prev) {
+               d = va_arg(ap, int);
+               prev = 0;
+               char *s = _itoa(d, isSigned, 2);
+               s = outstr(s, strToInt(widthDigits), ' ');
+
+               while (*s) {
+                    *screenp++ = *s++ | FOREGROUND(rightFgCol) | BACKGROUND(rightBgCol);
+                    if (++noDigitsPrinted > maxNoDigits) {
+                        // printed more chars than space
+                        // so break and dont print the rest
+                        break;
+                    }
+               }
+               continue;
+            }
+        }
+        if (chr == 'o') {            /* octal */
+            if (prev) {
+               d = va_arg(ap, int);
+               prev = 0;
+               char *s = _itoa(d, isSigned, 8);
+               s = outstr(s, strToInt(widthDigits), ' ');
+
+               while (*s) {
+                    *screenp++ = *s++ | FOREGROUND(rightFgCol) | BACKGROUND(rightBgCol);
+                    if (++noDigitsPrinted > maxNoDigits) {
+                        // printed more chars than space
+                        // so break and dont print the rest
+                        break;
+                    }
+               }
+               continue;
+            }
+        }
+        if (chr == 'x') {            /* hex */
+            if (prev) {
+               d = va_arg(ap, int);
+               prev = 0;
+               char *s = _itoa(d, isSigned, 16);
+               s = outstr(s, strToInt(widthDigits), ' ');
+
+               while (*s) {
+                    *screenp++ = *s++ | FOREGROUND(rightFgCol) | BACKGROUND(rightBgCol);
+                    if (++noDigitsPrinted > maxNoDigits) {
+                        // printed more chars than space
+                        // so break and dont print the rest
+                        break;
+                    }
+
+               }
+               continue;
+            }
+        }
+        if (chr == 'c') {              /* char */
+            /* need a cast here since va_arg only
+            takes fully promoted types */
+            if (prev) {
+                c = (char) va_arg(ap, int);
+                prev = 0;
+                *screenp++ = c | FOREGROUND(rightFgCol) | BACKGROUND(rightBgCol);
+                if (++noDigitsPrinted > maxNoDigits) {
+                    // printed more chars than space
+                    // so break and dont print the rest
+                    break;
+                }
+               continue;
+
+            }
+        }
+
+        if (chr == 'u') {              /* unsigned */
+            if (prev) {
+                isSigned = 0; // set as unsigned - not the default
+                continue;
+            }
+        }
+
+        if (chr >= '0' && chr <= '9') {
+            if (prev) {
+                widthDigits[digitLocation] = chr;
+                digitLocation++;
+
+                widthDigits[digitLocation] = '\0';
+                continue;
+            }
+        }
+
+        *screenp++ = chr | FOREGROUND(rightFgCol) | BACKGROUND(rightBgCol);
+        if (++noDigitsPrinted > maxNoDigits) {
+            // printed more chars than space
+            // so break and dont print the rest
+            break;
+        }
+    }
+
+    
+    // now got all the values in buffer
+    // so right allign and memcpy
+    // outstr(buffer, maxNoDigits, ' ');
+    memcpy((videoram) + (linelen * y) + (x) + (statusBreak) + (maxNoDigits - noDigitsPrinted) , buffer, maxNoDigits);
+
+    x = originalX;
+    y = originalY;
+    setcursor (x, y);
+    va_end(ap);
 }
