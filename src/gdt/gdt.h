@@ -22,6 +22,7 @@ struct gdt_ptr_s {
 
 
 void setGdtGate(uint32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t granularity);
+void setTSS(uint32_t num, uint32_t SS0, uint32_t ESP0);
 
 void initGdt();
 
