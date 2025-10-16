@@ -91,9 +91,10 @@ void genNextState(uint8_t *current, uint8_t *next) {
                 else // dies from overpopulation
                     setMapVal(next, x, y, deadVal);
             } else { // currently dead
-                if (alive == 3) // repopulation
+                if (alive == 3) {// repopulation 
                     lStatus("repopulation %d", alive);
                     setMapVal(next, x, y, aliveVal);
+                }
             }
         }
     }
