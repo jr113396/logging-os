@@ -40,6 +40,8 @@ ${CC} ${CFLAGS} -o ${OBJ}/string.o		-c ${SRC}/string.c
 ${CC} ${CFLAGS} -o ${OBJ}/kprintf.o   		-c ${SRC}/io/kprintf.c
 ${CC} ${CFLAGS} -o ${OBJ}/io.o        		-c ${SRC}/io/io.c
 ${CC} ${CFLAGS} -o ${OBJ}/vga.o       		-c ${SRC}/io/vga.c
+${CC} ${CFLAGS} -o ${OBJ}/stdio.o       	-c ${SRC}/io/stdio.c
+
 
 #			MISC
 ${CC} ${CFLAGS} -o ${OBJ}/conversions.o     -c ${SRC}/util/conversions.c
@@ -85,7 +87,8 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/keymap.o \
 	${OBJ}/apps-echo.o \
 	${OBJ}/apps-terminal.o \
-	${OBJ}/apps-game-of-life.o
+	${OBJ}/apps-game-of-life.o \
+	${OBJ}/stdio.o
 
 
 
