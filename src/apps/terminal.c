@@ -1,13 +1,14 @@
 #include "terminal.h"
-#include "drivers/ps2/keyboard/keyboard.h"
-#include "io/vga.h"
-#include "io/kprintf.h"
-#include "stdint.h"
-#include "string.h"
 #include "echo.h"
-#include "mem/stdmem.h"
-#include "apps/gameOfLife.h"
-#include "apps/app.h"
+
+#include "gameOfLife.h"
+#include "app.h"
+
+#include <io/vga.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+#include <mem/stdmem.h>
 
 struct appStruct apps[4];
 uint8_t noCommands = 4;

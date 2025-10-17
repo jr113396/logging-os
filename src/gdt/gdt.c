@@ -1,6 +1,6 @@
 #include "gdt.h"
 #include "tss.h"
-#include "mem/stdmem.h"
+#include <mem/stdmem.h>
 
 extern void gdt_flush(struct gdt_ptr_s *);
 extern void tss_flush();

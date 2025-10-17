@@ -1,9 +1,9 @@
 #include "pit.h"
-#include "io/kprintf.h"
-#include "io/vga.h"
 
-#include "stdint.h"
-#include "io/io.h"
+#include <io/kprintf.h>
+#include <io/vga.h>
+#include <stdint.h>
+#include <io/io.h>
 
 uint64_t ticksHandled = 0;
 uint8_t secForTicks = 10;

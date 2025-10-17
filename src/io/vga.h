@@ -1,7 +1,7 @@
 #ifndef __vgah
 #define __vgah
 
-#include "stdint.h"
+#include <stdint.h>
 
 #define BLACK      0x00
 #define BLUE       0x01
@@ -32,7 +32,6 @@
 #define terminal_bg_colour (BLACK)
 static uint16_t * videoram = (uint16_t *) 0xb8000;
 
-void putchar  ( char   );
 void vgainit  ( void   );
 // void status   ( char * );
 void status(char *fmt, ...);

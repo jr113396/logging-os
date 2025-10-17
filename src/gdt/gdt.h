@@ -4,7 +4,7 @@
 #ifndef gdth
 #define gdth
 
-# include "stdint.h"
+# include <stdint.h>
 struct gdt_entry_s {
     uint16_t limit;
     uint16_t base_low; // first 15 bits

@@ -1,8 +1,8 @@
 #include "echo.h"
-#include "io/kprintf.h"
-#include "io/vga.h"
-#include "drivers/ps2/keyboard/keyboard.h"
-#include "drivers/ps2/keyboard/keymap.h"
+#include <drivers/ps2/keyboard/keyboard.h>
+#include <drivers/ps2/keyboard/keymap.h>
+#include <io/vga.h>
+#include <stdio.h>
 
 void echoInit() {
     kprintf("ECHO\n");

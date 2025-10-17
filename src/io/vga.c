@@ -1,10 +1,11 @@
-#include <stdarg.h>
 #include "kprintf.h"
 #include "vga.h"
 #include "io.h"
-#include "util/conversions.h"
-#include "globals.h"
-#include "mem/stdmem.h"
+#include <globals.h>
+#include <stdarg.h>
+#include <util/conversions.h>
+#include <mem/stdmem.h>
+#include <stdio.h>
 
 static int x = 0;
 static int y = 0;

@@ -1,7 +1,7 @@
 #ifndef apph
 #define apph
 
-#include "stdint.h"
+#include <stdint.h>
 
 struct appStruct {
     char **names; // the names of the function

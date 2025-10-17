@@ -1,13 +1,14 @@
 #include "globals.h"
 #include "multiboot.h"
 #include "gdt/gdt.h"
-#include "io/kprintf.h"
 #include "io/vga.h"
 #include "interupts/idt.h"
 #include "pit/pit.h"
 #include "drivers/ps2/keyboard/keyboard.h"
 #include "apps/echo.h"
 #include "apps/terminal.h"
+
+#include <stdio.h>
 
 void abort( ) {
    kprintf ( "\n**** ABORT! ****\n");

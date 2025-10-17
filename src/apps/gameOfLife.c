@@ -1,11 +1,11 @@
 #include "gameOfLife.h"
-#include "io/kprintf.h"
-#include "mem/stdmem.h"
-#include "io/vga.h"
-#include "stdint.h"
-#include "pit/pit.h"
-#include "drivers/ps2/keyboard/keyboard.h"
-#include "drivers/ps2/keyboard/keymap.h"
+#include <pit/pit.h>
+#include <io/vga.h>
+#include <drivers/ps2/keyboard/keyboard.h>
+#include <drivers/ps2/keyboard/keymap.h>
+#include <mem/stdmem.h>
+#include <stdint.h>
+#include <stdio.h>
 
 
 static uint8_t 

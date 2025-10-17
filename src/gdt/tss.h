@@ -1,7 +1,7 @@
 #ifndef tssh
 #define tssh
 
-#include "stdint.h"
+#include <stdint.h>
 
 struct TSS_struct_protected {
     uint16_t LINK; // segments selector of the tss of the previous task
