@@ -53,6 +53,6 @@ struct TSS_struct_protected {
     // ------------
 
 
-}
+};
 
 #endif
