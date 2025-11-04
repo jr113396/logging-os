@@ -47,5 +47,5 @@ void *memcpy(void *dst, void *src, uint32_t count) {
     //         *d8++ = *s8++;
     //     }
     // }
-    // return dst;
+    return dst;
 }

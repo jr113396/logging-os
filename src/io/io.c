@@ -9,7 +9,7 @@ outb (uint16_t port, uint8_t n) {
                 );
 }
 
-inline char inb(uint16_t port) {
+inline uint8_t inb(uint16_t port) {
   char chr;
   asm volatile (
                   "inb %1, %0;\n\t"

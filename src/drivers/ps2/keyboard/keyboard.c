@@ -6,7 +6,7 @@
 #include <io/io.h>
 #include <io/vga.h>
 #include <stdio.h>
-
+#include <stdlib.h>
 
 
 bool    capslockOn  = 0,

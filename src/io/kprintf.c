@@ -66,8 +66,7 @@ char *outstr(char *str, int width, char paddingChar) {
     return buf;
 }
 
-void kprintf(char *fmt, ...) {
-    va_list ap;
+void kfprintf(void (*outChar)(char), char *fmt, va_list ap) {
     int d;
     char c, *s;
     int prev = 0, // specifies if the previous char was a control character '%'
@@ -79,13 +78,12 @@ void kprintf(char *fmt, ...) {
         widthDigits[i] = 0;
     }
 
-    va_start(ap, fmt);
     while (*fmt) {
         char chr = *fmt;
         *fmt++;
         if (chr == '%') {              /* control */
             if (prev) {
-                putchar('%');
+                outChar('%');
                 prev = 0;
                 continue;
             }
@@ -100,7 +98,7 @@ void kprintf(char *fmt, ...) {
                 s = outstr(s, strToInt(widthDigits), ' ');
                 prev = 0;
                 while (*s) {
-                    putchar (*s);
+                    outChar (*s);
                     s++;
                 }
                 continue;
@@ -116,7 +114,7 @@ void kprintf(char *fmt, ...) {
                 s = outstr(s, strToInt(widthDigits), '0');
                 // printf("a: '%s'\n", outstr(s, strToInt(widthDigits), '0'));
                 while (*s) {
-                    putchar(*s);
+                    outChar(*s);
                     s++;
                 }
                 continue;
@@ -130,7 +128,7 @@ void kprintf(char *fmt, ...) {
                 s = outstr(s, strToInt(widthDigits), ' ');
 
                 while (*s) {
-                    putchar(*s);
+                    outChar(*s);
                     s++;
                 }
                 continue;
@@ -144,7 +142,7 @@ void kprintf(char *fmt, ...) {
                 s = outstr(s, strToInt(widthDigits), ' ');
 
                 while (*s) {
-                    putchar(*s);
+                    outChar(*s);
                     s++;
                 }
                 continue;
@@ -158,7 +156,7 @@ void kprintf(char *fmt, ...) {
                 s = outstr(s, strToInt(widthDigits), ' ');
 
                 while (*s) {
-                    putchar(*s);
+                    outChar(*s);
                     s++;
                 }
                 continue;
@@ -170,7 +168,7 @@ void kprintf(char *fmt, ...) {
             if (prev) {
                 c = (char) va_arg(ap, int);
                 prev = 0;
-                putchar(c);
+                outChar(c);
                 continue;
 
             }
@@ -193,7 +191,14 @@ void kprintf(char *fmt, ...) {
             }
         }
 
-        putchar(chr);
+        outChar(chr);
     }
+    va_end(ap);
+}
+
+void kprintf(char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    kfprintf(putchar, fmt, ap);
     va_end(ap);
 }

@@ -1,29 +1,30 @@
 # cd /home/lancs/task2
-
 SRC=src
 OBJ=obj
 ISO=isofiles
-CPATH=$HOME/opt/cross/bin
+# CPATH=$HOME/opt/cross/bin
 
 if [ -e bootable.iso ]; then
-   /bin/rm bootable.iso
+   rm bootable.iso
 fi
 if [ -e kernel.bin ]; then
-   /bin/rm kernel.bin
+   rm kernel.bin
 fi
 if [ -d ${ISO} ]; then
-   /bin/rm -r ${ISO}/
+   rm -r ${ISO}/
 fi
 if [ -d ${OBJ} ]; then
-   /bin/rm -r ${OBJ}/
+   rm -r ${OBJ}/
 fi
-/bin/mkdir -p ${OBJ}
-/bin/mkdir -p ${ISO}/boot/grub
 
-AS=${CPATH}/${TARGET}-as
-CC=${CPATH}/${TARGET}-gcc
-LD=${CPATH}/${TARGET}-ld
-CFLAGS="-Wall -Wextra -fno-builtin -I src/" #-Werror 
+mkdir -p ${OBJ}
+mkdir -p ${ISO}/boot/grub
+
+AS=i686-elf-as
+CC=i686-elf-gcc
+LD=i686-elf-ld
+
+CFLAGS="-Wall -Wextra -fno-builtin -I src/ -nostdlib -nodefaultlibs" #-Werror 
 LDFLAGS="-nostdlib" #-nostartfiles -nodefaultlibs
 
 ${AS} -o ${OBJ}/boot.o   			${SRC}/boot.s
@@ -62,6 +63,11 @@ ${CC} ${CFLAGS} -o ${OBJ}/pit.o 			-c ${SRC}/pit/pit.c
 ${CC} ${CFLAGS} -o ${OBJ}/keyboard-driver.o -c ${SRC}/drivers/ps2/keyboard/keyboard.c
 ${CC} ${CFLAGS} -o ${OBJ}/keymap.o -c ${SRC}/drivers/ps2/keyboard/keymap.c
 
+#           Serial
+${CC} ${CFLAGS} -o ${OBJ}/serial-driver.o -c ${SRC}/drivers/serial/serial.c
+
+
+
 #			Apps
 ${CC} ${CFLAGS} -o ${OBJ}/apps-echo.o -c ${SRC}/apps/echo.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-terminal.o -c ${SRC}/apps/terminal.c
@@ -88,13 +94,14 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/apps-echo.o \
 	${OBJ}/apps-terminal.o \
 	${OBJ}/apps-game-of-life.o \
-	${OBJ}/stdio.o
+	${OBJ}/stdio.o \
+    ${OBJ}/serial-driver.o
 
 
 
 
-/bin/cp grub/stage2_eltorito ${ISO}/boot/grub
-/bin/cat > ${ISO}/boot/grub/menu.lst << __ENDMENU__
+cp grub/stage2_eltorito ${ISO}/boot/grub
+cat > ${ISO}/boot/grub/menu.lst << __ENDMENU__
 default 0
 timeout 1
  
@@ -103,9 +110,9 @@ color white/green yellow/blue
 title SCC211 Kernel
 kernel /boot/kernel.bin cmdline=any kernel parameters
 __ENDMENU__
-/bin/cp kernel.bin ${ISO}/boot
-/usr/bin/genisoimage -A "SCC211" -input-charset utf-8\
+cp kernel.bin ${ISO}/boot
+genisoimage -A "SCC211" -input-charset utf-8\
 	-R -b boot/grub/stage2_eltorito -no-emul-boot -boot-load-size 4 \
 	-boot-info-table -o bootable.iso ${ISO}
 
-/usr/bin/qemu-system-i386 -boot order=d -cdrom bootable.iso
+qemu-system-i386 -boot order=d -cdrom bootable.iso

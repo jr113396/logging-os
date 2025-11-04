@@ -5,9 +5,9 @@
 #include "interupts/idt.h"
 #include "pit/pit.h"
 #include "drivers/ps2/keyboard/keyboard.h"
+#include "drivers/serial/serial.h"
 #include "apps/echo.h"
 #include "apps/terminal.h"
-
 #include <stdio.h>
 
 void abort( ) {
@@ -17,32 +17,38 @@ void abort( ) {
 }
 
 void kmain( void* mbd, unsigned int magic ) {
-   vgainit( );
-   clearScreen();
-   initGdt();
-   setIDT();
-   initPit();
-   initKeyboard();
+    int returnedCodes = 0;
+    vgainit( );
+    clearScreen();
+    initGdt();
+    setIDT();
+    initPit();
+    initKeyboard();
+    returnedCodes += initSerial(1);
 
-   // clearScreen();
+    // clearScreen();
 
-   // for (int i = 0 ; i < 26;i++) {
-   //    kprintf("%d\n",i);
-   // }
-   // for (int i = 0; i < 8; i++) {
-   //    kprintf("%c", 'A' + i);
-   //    for (int j = 1; j < 10; j++) {
-   //       kprintf("%d", j);
-   //    }
-   // }
-   // kprintf("THis is a long message to test something\n");
-   // kprintf("short\n");   
+    // for (int i = 0 ; i < 26;i++) {
+    //    kprintf("%d\n",i);
+    // }
+    // for (int i = 0; i < 8; i++) {
+    //    kprintf("%c", 'A' + i);
+    //    for (int j = 1; j < 10; j++) {
+    //       kprintf("%d", j);
+    //    }
+    // }
+    // kprintf("THis is a long message to test something\n");
+    // kprintf("short\n");   
+    
+    status("3rd Year MyOs Project - Jamie Ross");
+    // getbootinfo (mbd, magic);
+    // abort( );
 
-   status("3rd Year MyOs Project - Jamie Ross");
-   // getbootinfo (mbd, magic);
-   // abort( );
-
-   // echo();
-   initTerminal();
-   // for (;;);
+    // echo();
+    if (returnedCodes == 0) {
+        initTerminal();
+    } else {
+        kprintf("Go status codes: %d from init functions\n", returnedCodes);
+    }
+    // for (;;);
 }
