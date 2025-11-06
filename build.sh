@@ -31,6 +31,7 @@ ${AS} -o ${OBJ}/boot.o   			${SRC}/boot.s
 ${AS} -o ${OBJ}/loader.o 			${SRC}/loader.s
 ${AS} -o ${OBJ}/gdts.o 				${SRC}/gdt/gdt.s
 ${AS} -o ${OBJ}/idts.o 				${SRC}/interupts/idt.s
+${AS} -o ${OBJ}/paging_s.o 			${SRC}/mem/paging.s
 
 # 			KERNEL
 ${CC} ${CFLAGS} -o ${OBJ}/kernel.o    		-c ${SRC}/kernel.c
@@ -55,6 +56,7 @@ ${CC} ${CFLAGS} -o ${OBJ}/idt.o 			-c ${SRC}/interupts/idt.c
 
 #			MEM
 ${CC} ${CFLAGS} -o ${OBJ}/stdmem.o 			-c ${SRC}/mem/stdmem.c
+${CC} ${CFLAGS} -o ${OBJ}/paging.o			-c ${SRC}/mem/paging.c
 
 #			PIT
 ${CC} ${CFLAGS} -o ${OBJ}/pit.o 			-c ${SRC}/pit/pit.c
@@ -95,7 +97,9 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/apps-terminal.o \
 	${OBJ}/apps-game-of-life.o \
 	${OBJ}/stdio.o \
-    ${OBJ}/serial-driver.o
+    ${OBJ}/serial-driver.o \
+	${OBJ}/paging.o \
+	${OBJ}//paging_s.o
 
 
 

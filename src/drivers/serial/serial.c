@@ -81,6 +81,7 @@ int serialWriteChar(int serialNum, char c) {
     while (writeBufferFree(portAddr) == 0);
 
     outb(portAddr, c);
+    return 0;
 }
 
 void serialPutChar(char c) {

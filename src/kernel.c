@@ -8,6 +8,7 @@
 #include "drivers/serial/serial.h"
 #include "apps/echo.h"
 #include "apps/terminal.h"
+#include "mem/paging.h"
 #include <stdio.h>
 
 void abort( ) {
@@ -25,6 +26,7 @@ void kmain( void* mbd, unsigned int magic ) {
     initPit();
     initKeyboard();
     returnedCodes += initSerial(1);
+    initPaging();
 
     // clearScreen();
 
@@ -43,12 +45,12 @@ void kmain( void* mbd, unsigned int magic ) {
     status("3rd Year MyOs Project - Jamie Ross");
     // getbootinfo (mbd, magic);
     // abort( );
-
     // echo();
     if (returnedCodes == 0) {
         initTerminal();
     } else {
         kprintf("Go status codes: %d from init functions\n", returnedCodes);
     }
+    abort();
     // for (;;);
 }
