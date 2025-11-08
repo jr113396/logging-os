@@ -279,8 +279,8 @@ void rstStatus(int start, int end) {
     }
 }
 
-void status(char *fmt, ...) {
-    if (!fmt) return;
+int status(char *fmt, ...) {
+    if (!fmt) return 0;
     va_list ap;
 
     char clearStatus = 1; // clear the status line before writing a new one
@@ -292,9 +292,10 @@ void status(char *fmt, ...) {
 
     va_start(ap, fmt);
 
-    kfprintf(putStatusChar, fmt, ap);
+    int numChars = kfprintf(putStatusChar, fmt, ap);
 
     va_end(ap);
+    return numChars;
 }
 
 void putLStatusChar(char c) {
@@ -305,8 +306,8 @@ void putLStatusChar(char c) {
     statusX++;
 }
 
-void lStatus(char *fmt, ...) {
-    if (!fmt) return;
+int lStatus(char *fmt, ...) {
+    if (!fmt)  return 0;
     va_list ap;
 
     statusX = 0;
@@ -317,9 +318,10 @@ void lStatus(char *fmt, ...) {
     }
     va_start(ap, fmt);
 
-    kfprintf(putLStatusChar, fmt, ap);
+    int numChars = kfprintf(putLStatusChar, fmt, ap);
 
     va_end(ap);
+    return numChars;
 }
 
 void putRStatusChar(char c) {
@@ -331,8 +333,8 @@ void putRStatusChar(char c) {
 }
 
 
-void rStatus(char *fmt, ...) {
-    if (!fmt) return;
+int rStatus(char *fmt, ...) {
+    if (!fmt) return 0;
     va_list ap;
 
     statusX = statusBreak;
@@ -343,7 +345,8 @@ void rStatus(char *fmt, ...) {
     }
     va_start(ap, fmt);
 
-    kfprintf(putRStatusChar, fmt, ap);
+    int numChars = kfprintf(putRStatusChar, fmt, ap);
 
     va_end(ap);
+    return numChars;
 }

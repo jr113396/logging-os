@@ -6,8 +6,8 @@
 
 void putchar  ( char   ); // from vga.h
 
-void kprintf  ( char *, ... ); // from kprintf.h
-void kfprintf(void (*outChar) (char), char *fmt, va_list ap);  // from kprintf
-uint32_t getStr(char *addr, uint32_t maxLen); // from keyboard.h
+int kprintf  ( char *, ... ); // from kprintf.h
+int kfprintf(void (*outChar) (char), char *fmt, va_list ap);  // from kprintf
+uint32_t getStr(char *addr, uint32_t maxLen, char ascii); // from stdio.h
 char getChar();
 #endif

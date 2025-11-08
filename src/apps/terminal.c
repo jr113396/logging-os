@@ -74,7 +74,7 @@ void initTerminal() {
         
         kprintf(">");
         
-        uint16_t noChars = getStr(buffer, 81);
+        uint16_t noChars = getStr(buffer, 81, 1);
         for (int i = 0; i < noCommands; i++) {
             struct appStruct currentApp = apps[i];
             for (int name = 0; name < currentApp.noNames; name++) {

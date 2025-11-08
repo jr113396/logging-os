@@ -3,6 +3,7 @@
 #include <interupts/idt.h>
 #include <stdio.h>
 #include <io/io.h>
+#include <loggingLevel.h>
 
 
 // using infomation from https://wiki.osdev.org/Serial_Ports#Line_Control_Register
@@ -10,7 +11,9 @@
 
 int initSerial(int serialNum) {
     if (serialNum > 8 || serialNum < 1) {
-        kprintf("[ERROR] serial num needs to be between 1-8\n");
+        #if _PRINT_LOGGING_LEVEL >= _LOGGING_ERROR
+            kprintf("[ERROR] serial num needs to be between 1-8\n");
+        #endif
         return 2;
     }
 
@@ -55,7 +58,9 @@ int initSerial(int serialNum) {
                               
     outb(portAddr + 0, 0xAE); // send 0xAE byte and as we are loopback mode that should be sent back  
     if (inb(portAddr + 0) != 0xAE) {
-        kprintf("[ERROR] error while setting up serial port %d, did not recv correct loopback data\n", portAddr);
+        #if _PRINT_LOGGING_LEVEL >= _LOGGING_ERROR
+            kprintf("[ERROR] error while setting up serial port %d, did not recv correct loopback data\n", portAddr);
+        #endif
         return 1;
     }
 
@@ -72,7 +77,9 @@ int writeBufferFree(uint16_t portAddr) {
 
 int serialWriteChar(int serialNum, char c) {
     if (serialNum > 8 || serialNum < 1) {
-        kprintf("[ERROR] serial num needs to be between 1-8\n");
+        #if _PRINT_LOGGING_LEVEL >= _LOGGING_ERROR
+            kprintf("[ERROR] serial num needs to be between 1-8\n");
+        #endif
         return 2;
     }
 

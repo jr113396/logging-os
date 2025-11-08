@@ -104,7 +104,7 @@ void printGameState(uint8_t *current) {
     for (int x = 0; x < game_linelen; x++) {
         for (int y = 0; y < game_rows; y++) {
             if (current[x + game_linelen * y] == aliveVal) {
-                    putCharAtPos('@', x, y, BLACK, WHITE);
+                putCharAtPos('@', x, y, BLACK, WHITE);
             }
             else {
                 putCharAtPos('X', x, y, WHITE, BLACK);

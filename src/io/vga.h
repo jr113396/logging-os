@@ -30,13 +30,15 @@
 #define tabspace    (4)
 
 #define terminal_bg_colour (BLACK)
+
+#pragma GCC diagnostic ignored "-Wunused-variable"
 static uint16_t * videoram = (uint16_t *) 0xb8000;
 
 void vgainit  ( void   );
 // void status   ( char * );
-void status(char *fmt, ...);
-void lStatus(char *fmt, ...);
-void rStatus(char *fmt, ...);
+int status(char *fmt, ...);
+int lStatus(char *fmt, ...);
+int rStatus(char *fmt, ...);
 void clearScreen ();
 void setcursor (int x, int y);
 void writeError(char *error);
