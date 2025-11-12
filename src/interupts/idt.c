@@ -7,6 +7,16 @@ struct idt_ptr_s idt_ptr;
 
 extern void idt_flush(uint32_t);
 
+
+void *irq_routines[16] = {
+    0,0,0,0,
+    0,0,0,0,
+    0,0,0,0,
+    0,0,0,0
+};
+
+void *isr_routines[32] = {0};
+
 char *exceptionMsgs[] = {
     "Division by Zero",
     "Debug",
@@ -143,11 +153,18 @@ void setIDT() {
 
 void isr_handler(struct InterruptRegisters *regs) {
     if (regs-> interuptNo <  32) {
-        // we have an error message for that interupt no
-        kprintf(exceptionMsgs[regs->interuptNo]);
-        kprintf("\n");
-        kprintf("System Halted\n");
-        asm ( "hlt;\n\t" );
+        if (isr_routines[regs->interuptNo] == 0) { // if no handler then use the default -> print error message and halt
+            kprintf("Interrupt %d fired and is being handled by the fault handler\n", regs->interuptNo);
+            // we have an error message for that interupt no
+            kprintf(exceptionMsgs[regs->interuptNo]);
+            kprintf("\n");
+            kprintf("System Halted\n");
+            asm ( "hlt;\n\t" );
+        }
+        else {
+            void (*handler)(struct InterruptRegisters *regs); // call the defined handler function for that error
+            handler(regs);
+        }
     }
 }
 
@@ -161,12 +178,6 @@ void setIDTGate(uint8_t num, uint32_t offset, uint16_t segment, uint8_t flags) {
     idt_entries[num].flags              = flags | 0x60;
 }
 
-void *irq_routines[16] = {
-    0,0,0,0,
-    0,0,0,0,
-    0,0,0,0,
-    0,0,0,0
-};
 
 void irq_handler(struct InterruptRegisters *regs) {
     void (*handler)(struct InterruptRegisters *regs);
@@ -186,4 +197,12 @@ void install_irq_handler (int irq, void (*handler)(struct InterruptRegisters *r)
 
 void uinstall_irq_handler(int irq) {
     irq_routines[irq] = 0;
+}
+
+void install_isr_handler (int isr, void (*handler)(struct InterruptRegisters *r)) {
+    isr_routines[isr] = handler;
+}
+
+void uinstall_isr_handler(int isr) {
+    isr_routines[isr] = 0;
 }
