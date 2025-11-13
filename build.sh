@@ -32,11 +32,13 @@ ${AS} -o ${OBJ}/loader.o 			${SRC}/loader.s
 ${AS} -o ${OBJ}/gdts.o 				${SRC}/gdt/gdt.s
 ${AS} -o ${OBJ}/idts.o 				${SRC}/interupts/idt.s
 ${AS} -o ${OBJ}/paging_s.o 			${SRC}/mem/paging.s
+${AS} -o ${OBJ}/protected_s.o 		${SRC}/protected.s
 
 # 			KERNEL
 ${CC} ${CFLAGS} -o ${OBJ}/kernel.o    		-c ${SRC}/kernel.c
 ${CC} ${CFLAGS} -o ${OBJ}/multiboot.o 		-c ${SRC}/multiboot.c
-${CC} ${CFLAGS} -o ${OBJ}/string.o		-c ${SRC}/string.c
+${CC} ${CFLAGS} -o ${OBJ}/string.o			-c ${SRC}/string.c
+${CC} ${CFLAGS} -o ${OBJ}/protected.o    	-c ${SRC}/protected.c
 
 # 			IO
 ${CC} ${CFLAGS} -o ${OBJ}/kprintf.o   		-c ${SRC}/io/kprintf.c
@@ -99,7 +101,9 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/stdio.o \
     ${OBJ}/serial-driver.o \
 	${OBJ}/paging.o \
-	${OBJ}//paging_s.o
+	${OBJ}/paging_s.o \
+	${OBJ}/protected.o \
+	${OBJ}/protected_s.o
 
 
 

@@ -9,6 +9,7 @@
 #include "apps/echo.h"
 #include "apps/terminal.h"
 #include "mem/paging.h"
+#include "protected.h"
 #include <stdio.h>
 
 void abort( ) {
@@ -26,8 +27,12 @@ void kmain( void* mbd, unsigned int magic ) {
     initPit();
     initKeyboard();
     returnedCodes += initSerial(1);
-    initPaging();
 
+    sprintf("Starting Protected Mode \r\n");
+    enterProtectedMode();
+
+    initPaging();
+    sprintf("paging initalised\r\n");
     // clearScreen();
 
     // for (int i = 0 ; i < 26;i++) {
@@ -42,15 +47,20 @@ void kmain( void* mbd, unsigned int magic ) {
     // kprintf("THis is a long message to test something\n");
     // kprintf("short\n");   
     
+    // for (;;);
     status("3rd Year MyOs Project - Jamie Ross");
     // getbootinfo (mbd, magic);
     // abort( );
     // echo();
+    sprintf("Protected Mode Enabled\r\n");
     if (returnedCodes == 0) {
+        sprintf("Starting terminal\r\n");
         initTerminal();
     } else {
         kprintf("Go status codes: %d from init functions\n", returnedCodes);
     }
     abort();
-    // for (;;);
+}
+
+void kprotectedMain() {
 }
