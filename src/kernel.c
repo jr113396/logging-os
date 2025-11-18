@@ -30,6 +30,7 @@ void kmain( void* mbd, unsigned int magic ) {
 
     sprintf("Starting Protected Mode \r\n");
     enterProtectedMode();
+    sprintf("Protected Mode Enabled\r\n");
 
     initPaging();
     sprintf("paging initalised\r\n");
@@ -47,12 +48,21 @@ void kmain( void* mbd, unsigned int magic ) {
     // kprintf("THis is a long message to test something\n");
     // kprintf("short\n");   
     
+    // uint32_t *addr = 0xC000000;
+    // *addr = 10;
+
     // for (;;);
     status("3rd Year MyOs Project - Jamie Ross");
     // getbootinfo (mbd, magic);
+    // sprintf("--------\r\n");
+    contigousMemStruct *freeMem; 
+    
+    *freeMem = getLargestMemory(mbd, magic);
+
+
+    sprintf("Free Mem Found %d - %d -> %d Mb\r\n", freeMem->start, freeMem->end, (freeMem->length/1024)/1024);
     // abort( );
     // echo();
-    sprintf("Protected Mode Enabled\r\n");
     if (returnedCodes == 0) {
         sprintf("Starting terminal\r\n");
         initTerminal();
@@ -63,4 +73,6 @@ void kmain( void* mbd, unsigned int magic ) {
 }
 
 void kprotectedMain() {
+    // i thought this would run when i entered protected mode but it doesnt seem to? but ill just leave this here in case
+    abort();
 }

@@ -50,8 +50,165 @@ char *exceptionMsgs[] = {
     "Reserved",
     "Reserved",
     "Reserved"
-
+    
 };
+
+// using info from https://wiki.osdev.org/CPU_Registers_x86
+void eflagsTranslate(uint32_t eflags) {
+    sprintf("EFLAGS: %b\r\n", eflags);
+    if (eflags & (1 << 0)) 
+        sprintf("Carry Set\r\n");
+    
+    if (eflags & (1 << 2)) 
+        sprintf("Parity Set\r\n");
+    
+    if (eflags & (1 << 4)) 
+        sprintf("Aux Set\r\n");
+    
+    if (eflags & (1 << 6)) 
+        sprintf("Zero Set\r\n");
+    
+    if (eflags & (1 << 7)) 
+        sprintf("Sign Set\r\n");
+    
+    if (eflags & (1 << 8)) 
+        sprintf("Trap Set\r\n");
+    
+    if (eflags & (1 << 9)) 
+        sprintf("Interupt enable Set\r\n");
+    
+    if (eflags & (1 << 10)) 
+        sprintf("Direction Set\r\n");
+    
+    if (eflags & (1 << 11)) 
+        sprintf("Overflow Set\r\n");
+    
+    if (eflags & (0b11 << 12)) 
+        sprintf("IO Priv Set\r\n");
+    
+    if (eflags & (1 << 14)) 
+        sprintf("Nested task Set\r\n");
+    
+    if (eflags & (1 << 16)) 
+        sprintf("Resume flag Set\r\n");
+    
+    if (eflags & (1 << 17)) 
+        sprintf("V8086 Set\r\n");
+
+    if (eflags & (1 << 18)) 
+        sprintf("Alignment Check\r\n");    
+    
+    if (eflags & (1 << 19)) 
+        sprintf("Virtual Interupt Flag\r\n");
+
+    if (eflags & (1 << 20)) 
+        sprintf("Virtual Interupt pending\r\n");
+
+    if (eflags & (1 << 21)) 
+        sprintf("Able to use CPUID Instruction\r\n");
+}
+
+void displayRegisters(struct InterruptRegisters *regs) {
+     kprintf("cr2 %d, ds: %d, edi: %d, esi: %d, ebp: %d, esp: %d, ebx: %d, esp: %d, ecx: %d, eax: %d\n",
+        regs->cr2,
+        regs->ds,
+        regs->edi,
+        regs->esi,
+        regs->ebp,
+        regs->esp,
+        regs->ebx,
+        regs->edx,
+        regs->ecx,
+        regs->eax
+    );
+
+    kprintf("I#: %d, ECode: %d\n eip: %d, csm: %d, eflags: %d, use resp: %d, ss: %d \n",
+        regs->interuptNo,
+        regs->errorCode,
+        regs->eip,
+        regs->csm,
+        regs->eflags,
+        regs->useresp,
+        regs->ss
+    );
+    eflagsTranslate(regs->eflags);
+    uint32_t *eip_broken = (uint32_t *)(regs->eip);
+    kprintf("EIP: %x, %ux\n", eip_broken, *eip_broken);
+}
+void divByZeroHandler(struct InterruptRegisters *regs) {
+    kprintf("Division by zero handler being run yay\n");
+    asm ( "hlt;\n\t" );
+
+}
+
+
+
+void install_default_isrs() {
+    sprintf("Installing /0 handler\r\n");
+    install_isr_handler(0, &divByZeroHandler);
+}
+
+void isr_handler(struct InterruptRegisters *regs) {
+    if (regs-> interuptNo <  32) {
+        kprintf("%d - %d\n", isr_routines[regs->interuptNo], regs->interuptNo);
+        if (isr_routines[regs->interuptNo] == 0) { // if no handler then use the default -> print error message and halt
+            kprintf("Interrupt %d fired and is being handled by the fault handler\n", regs->interuptNo);
+            // we have an error message for that interupt no
+            kprintf(exceptionMsgs[regs->interuptNo]);
+            kprintf("\n");
+            displayRegisters(regs);
+            kprintf("System Halted\n");
+            asm ( "hlt;\n\t" );
+        }
+        else {
+            kprintf("Running Custom Handler for %d\n", regs->interuptNo);
+            void (*handler)(struct InterruptRegisters *regs); // call the defined handler function for that error
+            handler = isr_routines[regs->interuptNo];
+            handler(regs);
+            kprintf("Custom Handler for %d\n returned", regs->interuptNo);
+        }
+    }
+}
+
+
+void setIDTGate(uint8_t num, uint32_t offset, uint16_t segment, uint8_t flags) {
+    idt_entries[num].offset_low         = offset & 0xFFFF;
+    idt_entries[num].offset_high        = (offset >> 16) & 0xFFFF;
+
+    idt_entries[num].segment_selector   = segment;
+    idt_entries[num].resvd              = 0;
+    idt_entries[num].flags              = flags | 0x60;
+}
+
+
+void irq_handler(struct InterruptRegisters *regs) {
+    void (*handler)(struct InterruptRegisters *regs);
+    handler = irq_routines[regs->interuptNo -32];
+    if (handler) {
+        handler(regs);
+    }
+    if (regs->interuptNo >= 40) {
+        outb(0xA0, 0x20);
+    }
+    outb(0x20, 0x20);
+}
+
+void install_irq_handler (int irq, void (*handler)(struct InterruptRegisters *r)) {
+    irq_routines[irq] = handler;
+}
+
+void uinstall_irq_handler(int irq) {
+    irq_routines[irq] = 0;
+}
+
+void install_isr_handler (int isr, void (*handler)(struct InterruptRegisters *r)) {
+    isr_routines[isr] = handler;
+}
+
+void uinstall_isr_handler(int isr) {
+    isr_routines[isr] = 0;
+}
+
 
 void setIDT() {
     idt_ptr.limit = sizeof(struct idt_value_s) * 256 - 1;
@@ -149,60 +306,6 @@ void setIDT() {
     setIDTGate(177, (uint32_t)isr177, 0x08, 0x8E);
 
     idt_flush((uint32_t) &idt_ptr);
-}
 
-void isr_handler(struct InterruptRegisters *regs) {
-    if (regs-> interuptNo <  32) {
-        if (isr_routines[regs->interuptNo] == 0) { // if no handler then use the default -> print error message and halt
-            kprintf("Interrupt %d fired and is being handled by the fault handler\n", regs->interuptNo);
-            // we have an error message for that interupt no
-            kprintf(exceptionMsgs[regs->interuptNo]);
-            kprintf("\n");
-            kprintf("System Halted\n");
-            asm ( "hlt;\n\t" );
-        }
-        else {
-            void (*handler)(struct InterruptRegisters *regs); // call the defined handler function for that error
-            handler(regs);
-        }
-    }
-}
-
-
-void setIDTGate(uint8_t num, uint32_t offset, uint16_t segment, uint8_t flags) {
-    idt_entries[num].offset_low         = offset & 0xFFFF;
-    idt_entries[num].offset_high        = (offset >> 16) & 0xFFFF;
-
-    idt_entries[num].segment_selector   = segment;
-    idt_entries[num].resvd              = 0;
-    idt_entries[num].flags              = flags | 0x60;
-}
-
-
-void irq_handler(struct InterruptRegisters *regs) {
-    void (*handler)(struct InterruptRegisters *regs);
-    handler = irq_routines[regs->interuptNo -32];
-    if (handler) {
-        handler(regs);
-    }
-    if (regs->interuptNo >= 40) {
-        outb(0xA0, 0x20);
-    }
-    outb(0x20, 0x20);
-}
-
-void install_irq_handler (int irq, void (*handler)(struct InterruptRegisters *r)) {
-    irq_routines[irq] = handler;
-}
-
-void uinstall_irq_handler(int irq) {
-    irq_routines[irq] = 0;
-}
-
-void install_isr_handler (int isr, void (*handler)(struct InterruptRegisters *r)) {
-    isr_routines[isr] = handler;
-}
-
-void uinstall_isr_handler(int isr) {
-    isr_routines[isr] = 0;
+    install_default_isrs();
 }

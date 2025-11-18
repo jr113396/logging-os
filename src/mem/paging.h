@@ -2,7 +2,7 @@
 #define __mem_paging_h
 
 
-// with help from https://isu-rathnayaka.medium.com/develop-your-own-x86-operating-system-os-8-78a25b945dde and https://wiki.osdev.org/Setting_Up_Paging
+// with help from https://isu-rathnayaka.medium.com/develop-your-own-x86-operating-system-os-8-78a25b945dd, https://www.youtube.com/watch?v=QIGun_BGuDw, and https://wiki.osdev.org/Setting_Up_Paging
 
 #include <stdint.h>
 
@@ -10,56 +10,27 @@
 #define NUM_PAGES 1024
 #define PAGE_FRAME_SIZE 4096
 
-#define PRESENT         1
-#define PAGE_READONLY   0
-#define PAGE_READWRITE  1
-#define PAGE_USER       1
-#define PAGE_KERNEL     0
-#define PAGE_SIZE_4KB   0
-#define PAGE_SIZE_4MB   1
-
-#define PAGING_PRESENT      (1 << 0)
-#define PAGING_WRITE        (1 << 1)
-#define PAGING_SUPERVISOR   (1 << 2)
-
 extern void loadPageDirectory(uint32_t *);
 extern void enablePaging();
 
 void initPaging();
 
+typedef uint32_t pt_entry;
+typedef uint32_t pd_entry; 
+typedef uint32_t virtual_addr;
+typedef uint32_t physical_addr;
 
-struct page {
-   unsigned int present    : 1;
-   unsigned int rw         : 1; 
-   unsigned int user       : 1;  
-   unsigned int accessed   : 1;  
-   unsigned int dirty      : 1;
-   unsigned int unused     : 7; 
-   unsigned int frame      : 20;
-};
+int getPageDirIndex(uint32_t addr);
+int getPageFrameIndex(uint32_t addr);
 
-struct pageTable {
-   struct page pages[1024] __attribute__((aligned(4096)));
-};
+typedef struct {
+   pt_entry entries[1024] __attribute__((aligned(4096)));
+} page_table;
 
-struct page_directory {
-   /**
-      Array of pointers to pagetables.
-   **/
-   struct pageTable *tables[1024];
-   /**
-      Array of pointers to the pagetables above, but gives their *physical*
-      location, for loading into the CR3 register.
-   **/
-   unsigned int tablesPhysical[1024];
-   /**
-      The physical address of tablesPhysical. This comes into play
-      when we get our kernel heap allocated and the directory
-      may be in a different location in virtual memory.
-   **/
-   unsigned int physicalAddr;
+typedef struct {
+   pd_entry entries[1024] __attribute__((aligned(4096)));
+} page_directory;
 
-};
 
 // struct PageDirectoryEntry {
 //     uint8_t lowerFlags;
@@ -92,5 +63,33 @@ struct page_directory {
 //     // G    - Global
 //     // AVL  - Available
 // } __attribute__((packed));
+
+// from https://www.youtube.com/watch?v=QIGun_BGuDw
+typedef enum {
+   PTE_PRESENT          = 0x01,
+   PTE_READ_WRITE       = 0x02,
+   PTE_USER             = 0x04,
+   PTE_WRITE_THROUGH    = 0x08,
+   PTE_CACHE_DISABLE    = 0x10,
+   PTE_ACCESSED         = 0x20,
+   PTE_DIRTY            = 0x40,
+   PTE_PAT              = 0x80,
+   PTE_GLOBAL           = 0x100,
+   PTE_FRAME            = 0x7FFFF0000, // the last 12 bits
+} PAGE_TABLE_FLAGS; 
+
+typedef enum {
+   PDE_PRESENT          = 0x01,
+   PDE_READ_WRITE       = 0x02,
+   PDE_USER             = 0x04,
+   PDE_WRITE_THROUGH    = 0x08,
+   PDE_CACHE_DISABLE    = 0x10,
+   PDE_ACCESSED         = 0x20,
+   PDE_DIRTY            = 0x40,
+   PDE_PAGE_SIZE        = 0x80,
+   PDE_GLOBAL           = 0x100,
+   PDE_PAT              = 0x2000,
+   PDE_FRAME            = 0x7FFFF0000, // the last 12 bits
+} PAGE_DIR_FLAGS; 
 
 #endif
