@@ -8,6 +8,7 @@
 #include "drivers/serial/serial.h"
 #include "apps/echo.h"
 #include "apps/terminal.h"
+#include "apps/plotter.h"
 #include "mem/paging.h"
 #include "protected.h"
 #include <stdio.h>

@@ -1,6 +1,7 @@
 #include "idt.h"
 #include <io/io.h>
 #include <stdio.h>
+#include "drivers/serial/serial.h"
 
 struct idt_value_s idt_entries[256];
 struct idt_ptr_s idt_ptr;

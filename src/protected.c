@@ -1,6 +1,9 @@
 // #include "protected.h"
 #include "io/io.h"
 #include <stdio.h>
+extern void enable_a20();
+
+
 // from https://wiki.osdev.org/Non_Maskable_Interrupt
 void NMI_enable() {
     outb(0x70, inb(0x70) & 0x7F);

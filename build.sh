@@ -25,7 +25,7 @@ CC=i686-elf-gcc
 LD=i686-elf-ld
 
 CFLAGS="-Wall -Wextra -fno-builtin -I src/ -nostdlib -nodefaultlibs" #-Werror 
-LDFLAGS="-nostdlib" #-nostartfiles -nodefaultlibs
+LDFLAGS="-nostdlib " #-nostartfiles -nodefaultlibs
 
 ${AS} -o ${OBJ}/boot.o   			${SRC}/boot.s
 ${AS} -o ${OBJ}/loader.o 			${SRC}/loader.s
@@ -38,6 +38,8 @@ ${AS} -o ${OBJ}/protected_s.o 		${SRC}/protected.s
 ${CC} ${CFLAGS} -o ${OBJ}/kernel.o    		-c ${SRC}/kernel.c
 ${CC} ${CFLAGS} -o ${OBJ}/multiboot.o 		-c ${SRC}/multiboot.c
 ${CC} ${CFLAGS} -o ${OBJ}/string.o			-c ${SRC}/string.c
+${CC} ${CFLAGS} -o ${OBJ}/maths.o			-c ${SRC}/maths.c
+${CC} ${CFLAGS} -o ${OBJ}/random.o			-c ${SRC}/random.c
 ${CC} ${CFLAGS} -o ${OBJ}/protected.o    	-c ${SRC}/protected.c
 
 # 			IO
@@ -76,6 +78,7 @@ ${CC} ${CFLAGS} -o ${OBJ}/serial-driver.o -c ${SRC}/drivers/serial/serial.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-echo.o -c ${SRC}/apps/echo.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-terminal.o -c ${SRC}/apps/terminal.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-game-of-life.o -c ${SRC}/apps/gameOfLife.c
+${CC} ${CFLAGS} -o ${OBJ}/apps-plotter.o -c ${SRC}/apps/plotter.c
 
 ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/boot.o \
@@ -103,9 +106,10 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/paging.o \
 	${OBJ}/paging_s.o \
 	${OBJ}/protected.o \
-	${OBJ}/protected_s.o
-
-
+	${OBJ}/protected_s.o \
+	${OBJ}/apps-plotter.o \
+	${OBJ}/maths.o \
+	${OBJ}/random.o
 
 
 cp grub/stage2_eltorito ${ISO}/boot/grub

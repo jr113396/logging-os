@@ -12,6 +12,10 @@ void pitHandler(struct InterruptRegisters *regs) {
     ticksHandled++;
 }
 
+uint64_t getTickCount() {
+    return ticksHandled;
+}
+
 void setPitFreq(uint8_t secFor1000Ticks) {
     secForTicks = secFor1000Ticks;
     uint32_t desiredHz = (1000/secFor1000Ticks);
