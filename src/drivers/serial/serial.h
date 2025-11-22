@@ -8,5 +8,4 @@ static uint16_t PORT_MAPPING[] = {0x3F8, 0x2F8, 0x3E8, 0x2E8, 0x5F8, 0x4F8, 0x5E
 int initSerial(int serialNum); 
 int serialWriteChar(int serialNum, char c);
 void serialPutChar(char c); 
-void sprintf(char *fmt, ...);
 #endif

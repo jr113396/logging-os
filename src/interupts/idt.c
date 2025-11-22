@@ -166,7 +166,7 @@ void isr_handler(struct InterruptRegisters *regs) {
             void (*handler)(struct InterruptRegisters *regs); // call the defined handler function for that error
             handler = isr_routines[regs->interuptNo];
             handler(regs);
-            kprintf("Custom Handler for %d\n returned", regs->interuptNo);
+            kprintf("Custom Handler for %d\n returned\r\n", regs->interuptNo);
         }
     }
 }

@@ -1,5 +1,5 @@
 #include "stdmem.h"
-
+#include "physicalMemManager.h"
 void memset(void *loc, char val, uint32_t count) {
     char *p = (char*) loc;
     for (; count > 0; count--) {
@@ -48,4 +48,9 @@ void *memcpy(void *dst, void *src, uint32_t count) {
     //     }
     // }
     return dst;
+}
+
+void *getPage() {
+    // returns the addr of a free page to use
+    return findNextHigherFree();
 }

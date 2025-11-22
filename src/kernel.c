@@ -12,6 +12,7 @@
 #include "mem/paging.h"
 #include "mem/physicalMemManager.h"
 #include "protected.h"
+#include <string.h>
 #include <stdio.h>
 
 void abort( ) {
@@ -42,8 +43,57 @@ void kmain( void* mbd, unsigned int magic ) {
     sprintf("Setting Mem Start to %ud\r\n", freeMem.start);
     setMemStart(freeMem.start  + 200000);
 
+    uint32_t *addr, base = 0xC000000;
+    uint32_t a;
 
-    uint32_t *addr = allocNewPage();
+    sprintf("TESTING VALUES\r\n");
+    addr = 0x40000;
+    sprintf("Reading from %ux\r\n", addr);
+    a = *addr;
+    sprintf("Writing to val %ux\r\n", addr);
+    *addr = 10; 
+    
+    for (int i = 0; i <10; i++) {
+        addr = (base + i);
+        sprintf("Reading from %ux - i %d\r\n", addr, i);
+        a = *addr;
+        sprintf("Writing to val %ux\r\n", addr);
+        *addr = 10;
+    }
+
+    base = 0x400000;
+    for (int i = 0; i <10; i++) {
+        addr = (base + i);
+        sprintf("Reading from %ux - i %d\r\n", addr, i);
+        a = *addr;
+        sprintf("Writing to val %ux\r\n", addr);
+        *addr = 10;
+    }
+    base = 0x800000;
+    for (int i = 0; i <10; i++) {
+        addr = (base + i);
+        sprintf("Reading from %ux - i %d\r\n", addr, i);
+        a = *addr;
+        sprintf("Writing to val %ux\r\n", addr);
+        *addr = 10;
+    }
+    base = 0xA00000;
+    for (int i = 0; i <10; i++) {
+        addr = (base + i);
+        sprintf("Reading from %ux - i %d\r\n", addr, i);
+        a = *addr;
+        sprintf("Writing to val %ux\r\n", addr);
+        *addr = 10;
+    }
+
+    uint32_t *pageAddr = getPage();
+    viewMem(pageAddr, 4 * 1024);
+    char *msg = "This is a test thing to try and put in a page and see if it works\0";
+    memcpy(pageAddr, msg, strlen(msg));
+    kprintf("From Page: %s\r\n", pageAddr);
+
+    returnedCodes++;
+    // uint32_t *addr = allocNewPage();
     // sprintf("Allocated addr %ud\r\n", addr);
 
     // *addr = 10;
@@ -78,7 +128,7 @@ void kmain( void* mbd, unsigned int magic ) {
         sprintf("Starting terminal\r\n");
         initTerminal();
     } else {
-        kprintf("Go status codes: %d from init functions\n", returnedCodes);
+        kprintf("Got status codes: %d from init functions\n", returnedCodes);
     }
     abort();
 }

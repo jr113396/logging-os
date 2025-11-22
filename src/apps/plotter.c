@@ -1,7 +1,7 @@
 #include "plotter.h"
 
 #include "io/vga.h"
-#include "drivers/serial/serial.h"
+#include <stdio.h>
 #include "pit/pit.h"
 #include <stdint.h>
 #include <maths.h>
