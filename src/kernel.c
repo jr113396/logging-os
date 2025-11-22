@@ -10,6 +10,7 @@
 #include "apps/terminal.h"
 #include "apps/plotter.h"
 #include "mem/paging.h"
+#include "mem/physicalMemManager.h"
 #include "protected.h"
 #include <stdio.h>
 
@@ -35,6 +36,20 @@ void kmain( void* mbd, unsigned int magic ) {
 
     initPaging();
     sprintf("paging initalised\r\n");
+
+    contigousMemStruct freeMem = getLargestMemory(mbd, magic);
+    sprintf("Free Mem Found %d - %d -> %d Kb\r\n", freeMem.start, freeMem.end, ((freeMem.length/(1024 * 4))/4));
+    sprintf("Setting Mem Start to %ud\r\n", freeMem.start);
+    setMemStart(freeMem.start  + 200000);
+
+
+    uint32_t *addr = allocNewPage();
+    // sprintf("Allocated addr %ud\r\n", addr);
+
+    // *addr = 10;
+
+    // sprintf("Set value to 10: %d at %d\r\n", *addr, addr);
+
     // clearScreen();
 
     // for (int i = 0 ; i < 26;i++) {
@@ -56,12 +71,7 @@ void kmain( void* mbd, unsigned int magic ) {
     status("3rd Year MyOs Project - Jamie Ross");
     // getbootinfo (mbd, magic);
     // sprintf("--------\r\n");
-    contigousMemStruct *freeMem; 
-    
-    *freeMem = getLargestMemory(mbd, magic);
 
-
-    sprintf("Free Mem Found %d - %d -> %d Mb\r\n", freeMem->start, freeMem->end, (freeMem->length/1024)/1024);
     // abort( );
     // echo();
     if (returnedCodes == 0) {

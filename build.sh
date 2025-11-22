@@ -61,6 +61,7 @@ ${CC} ${CFLAGS} -o ${OBJ}/idt.o 			-c ${SRC}/interupts/idt.c
 #			MEM
 ${CC} ${CFLAGS} -o ${OBJ}/stdmem.o 			-c ${SRC}/mem/stdmem.c
 ${CC} ${CFLAGS} -o ${OBJ}/paging.o			-c ${SRC}/mem/paging.c
+${CC} ${CFLAGS} -o ${OBJ}/physicalMemMan.o  -c ${SRC}/mem/physicalMemManager.c
 
 #			PIT
 ${CC} ${CFLAGS} -o ${OBJ}/pit.o 			-c ${SRC}/pit/pit.c
@@ -109,7 +110,10 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/protected_s.o \
 	${OBJ}/apps-plotter.o \
 	${OBJ}/maths.o \
-	${OBJ}/random.o
+	${OBJ}/random.o \
+	${OBJ}/physicalMemMan.o
+
+
 
 
 cp grub/stage2_eltorito ${ISO}/boot/grub

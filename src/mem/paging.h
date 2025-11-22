@@ -9,6 +9,7 @@
 
 #define NUM_PAGES 1024
 #define PAGE_FRAME_SIZE 4096
+#define PAGE_SIZE 4096
 
 extern void loadPageDirectory(uint32_t *);
 extern void enablePaging();
@@ -22,6 +23,8 @@ typedef uint32_t physical_addr;
 
 int getPageDirIndex(uint32_t addr);
 int getPageFrameIndex(uint32_t addr);
+
+void *allocNewPage();
 
 typedef struct {
    pt_entry entries[1024] __attribute__((aligned(4096)));
