@@ -52,5 +52,9 @@ void *memcpy(void *dst, void *src, uint32_t count) {
 
 void *getPage() {
     // returns the addr of a free page to use
-    return findNextHigherFree();
+    return findNextHigherFree(1);
+}
+
+void  *kmalloc(uint32_t numBytes) {
+
 }

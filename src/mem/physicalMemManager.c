@@ -12,7 +12,7 @@ char *a = "SOMETHING";
 
 uint32_t lowerBitmap[LENGTH_OF_LOWER_MAP] = {0};
 
-void viewMem(uint32_t *addr, uint32_t length) {
+void viewMem(uint8_t *addr, uint32_t length) {
     sprintf("\r\n");
     sprintf("******************************\r\n");
     sprintf("*                            *\r\n");
@@ -56,10 +56,24 @@ void setMemStart(uint32_t * memStartAddr) {
 }
 
 
-uint32_t *findNextFreePage(uint32_t *map, uint32_t length, uint32_t *start) {
+uint32_t *findNextFreePage(uint8_t numPages, uint32_t *map, uint32_t length, uint32_t *start) {
     // returns the addr of the next free page given a bitmap, length of the bitmap and where the start of the map maps to in memory
+    
+    if (numPages > 32) {
+        sprintf("Incorrect number of pages requested %d, must be 1-32\r\n", numPages);
+        return 0;
+    }
+    uint32_t mask = 0;
+    for (int i = 0; i < numPages; i++) {
+        mask |= (1 << i);
+    }
+
+    
     for (uint32_t i = 0; i < length; i++){
         sprintf("%ud - %b\r\n", map + i, map[i]);
+
+
+
         if ((map[i] & 0xFFFFFFFF) == 0xFFFFFFFF) {
             // all pages aready allocated so skip it
 
@@ -70,10 +84,10 @@ uint32_t *findNextFreePage(uint32_t *map, uint32_t length, uint32_t *start) {
             // sprintf("Found a none full byte - %b\r\n", map[i]);
             for (int bitPos = 0; bitPos < 32; bitPos++) {
                 // sprintf("Runnign %b got %d\r\n", 1<<bitPos, map[i]  & (1 << bitPos) );
-                if ((map[i]  & (1 << bitPos)) == 0) {
+                if ((map[i]  & (mask << bitPos)) == 0) {
                     // sprintf("Found free bit %d\r\n", bitPos);
                     // found a free space
-                    map[i] |= (1 << bitPos); // set that bit to 1 to show that its in use
+                    map[i] |= (mask << bitPos); // set that bit to 1 to show that its in use
                     
                     // get the current byte number (i * 4), * 8 as 8 pages per byte, then the bit withi that byte equals the page
                     // as each bit is representing 1 page 
@@ -91,31 +105,32 @@ uint32_t *findNextFreePage(uint32_t *map, uint32_t length, uint32_t *start) {
     return 0; // return 0 as we havent found a place
 }
 
-uint32_t *findNextLowerFree() {
-    uint32_t *addr =  findNextFreePage(lowerBitmap, LENGTH_OF_LOWER_MAP, lowerMemStart);
+uint32_t *findNextLowerFree(uint8_t numPages) {
+    uint32_t *addr =  findNextFreePage(numPages, lowerBitmap, LENGTH_OF_LOWER_MAP, lowerMemStart);
     sprintf("Found lower addr: %d \r\n", addr);
-    viewMem(addr-1000, 1000);
-    sprintf("Starts here");
-    viewMem(addr, 4 * 1024);
-    sprintf("Ends Here");
-    viewMem(addr + 4 * 1024, 1000);
+    
+    // viewMem(addr-1000, 1000);
+    // sprintf("Starts here");
+    // viewMem(addr, 4 * 1024);
+    // sprintf("Ends Here");
+    // viewMem(addr + 4 * 1024, 1000);
 
     return addr;
 
 }
 
-uint32_t *findNextHigherFree() {
+uint32_t *findNextHigherFree(uint8_t numPages) {
     if (memStart == 0) {
         sprintf("Set higher addr first\r\n");
         return 0;
     }
-    uint32_t *addr = findNextFreePage(bitmap, LENGTH_OF_BITMAP, memStart);
+    uint32_t *addr = findNextFreePage(numPages, bitmap, LENGTH_OF_BITMAP, memStart);
 
     sprintf("Found heigher addr: %d\r\n", addr);
-    viewMem(addr-1000, 1000);
-    sprintf("Starts here");
-    viewMem(addr, 4 * 1024);
-    sprintf("Ends Here");    
-    viewMem(addr + 4 * 1024, 1000);
+    // viewMem(addr-1000, 1000);
+    // sprintf("Starts here");
+    // viewMem(addr, 4 * 1024);
+    // sprintf("Ends Here");    
+    // viewMem(addr + 4 * 1024, 1000);
     return addr;
 }

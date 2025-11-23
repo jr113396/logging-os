@@ -91,31 +91,9 @@ void kmain( void* mbd, unsigned int magic ) {
     char *msg = "This is a test thing to try and put in a page and see if it works\0";
     memcpy(pageAddr, msg, strlen(msg));
     kprintf("From Page: %s\r\n", pageAddr);
+    viewMem(pageAddr, 4 * 1024);
 
     returnedCodes++;
-    // uint32_t *addr = allocNewPage();
-    // sprintf("Allocated addr %ud\r\n", addr);
-
-    // *addr = 10;
-
-    // sprintf("Set value to 10: %d at %d\r\n", *addr, addr);
-
-    // clearScreen();
-
-    // for (int i = 0 ; i < 26;i++) {
-    //    kprintf("%d\n",i);
-    // }
-    // for (int i = 0; i < 8; i++) {
-    //    kprintf("%c", 'A' + i);
-    //    for (int j = 1; j < 10; j++) {
-    //       kprintf("%d", j);
-    //    }
-    // }
-    // kprintf("THis is a long message to test something\n");
-    // kprintf("short\n");   
-    
-    // uint32_t *addr = 0xC000000;
-    // *addr = 10;
 
     // for (;;);
     status("3rd Year MyOs Project - Jamie Ross");

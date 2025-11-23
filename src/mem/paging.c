@@ -226,7 +226,7 @@ void pageFaultErrorBits(uint32_t error) {
 
 uint32_t getNewPageTable() {
     sprintf("Getting pages from higher mem\r\n");
-    uint32_t *addr = findNextHigherFree();
+    uint32_t *addr = findNextHigherFree(1);
     if (addr == 0) {
         sprintf("Returned addr == 0, should prob panic AAAAA!\r\n");
         return 0;
@@ -307,7 +307,7 @@ void pageFaultHandler(struct InterruptRegisters *regs) {
         sprintf("Page dir does not exist after creation\r\n");
         pageFaultError(regs);
     }
-    installPageTabEntry(addr, *findNextHigherFree());
+    installPageTabEntry(addr, *findNextHigherFree(1));
     // pageFaultError(regs);
 }
 

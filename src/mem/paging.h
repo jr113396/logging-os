@@ -16,10 +16,6 @@ extern void enablePaging();
 
 void initPaging();
 
-typedef uint32_t pt_entry;
-typedef uint32_t pd_entry; 
-typedef uint32_t virtual_addr;
-typedef uint32_t physical_addr;
 
 int getPageDirIndex(uint32_t addr);
 int getPageFrameIndex(uint32_t addr);
@@ -27,13 +23,14 @@ int getPageFrameIndex(uint32_t addr);
 void *allocNewPage();
 
 typedef struct {
-   pt_entry entries[1024] __attribute__((aligned(4096)));
+   uint32_t entries[1024] __attribute__((aligned(4096)));
 } page_table;
 
 typedef struct {
-   pd_entry entries[1024] __attribute__((aligned(4096)));
+   uint32_t entries[1024] __attribute__((aligned(4096)));
 } page_directory;
 
+void installPageTabEntry(uint32_t virtAddr, uint32_t physAddr);
 
 // struct PageDirectoryEntry {
 //     uint8_t lowerFlags;
