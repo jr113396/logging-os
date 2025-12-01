@@ -1,7 +1,7 @@
 #include "maths.h"
 
 uint32_t mod(uint32_t val, uint32_t div) {
-    while (val > div) {
+    while (val >= div) {
         val-=div;
     }
     return val;
