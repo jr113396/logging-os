@@ -8,4 +8,6 @@ uint32_t *findNextHigherFree(uint8_t numPages);
 uint32_t *findNextLowerFree(uint8_t numPages);
 void setMemStart(uint32_t * memStartAddr);
 
+uint32_t returnHigherPage(uint32_t *addr);
+
 #endif

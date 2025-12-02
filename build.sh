@@ -62,6 +62,7 @@ ${CC} ${CFLAGS} -o ${OBJ}/idt.o 			-c ${SRC}/interupts/idt.c
 ${CC} ${CFLAGS} -o ${OBJ}/stdmem.o 			-c ${SRC}/mem/stdmem.c
 ${CC} ${CFLAGS} -o ${OBJ}/paging.o			-c ${SRC}/mem/paging.c
 ${CC} ${CFLAGS} -o ${OBJ}/physicalMemMan.o  -c ${SRC}/mem/physicalMemManager.c
+${CC} ${CFLAGS} -o ${OBJ}/kmalloc.o			-c ${SRC}/mem/kmalloc.c
 
 #			PIT
 ${CC} ${CFLAGS} -o ${OBJ}/pit.o 			-c ${SRC}/pit/pit.c
@@ -111,7 +112,8 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/apps-plotter.o \
 	${OBJ}/maths.o \
 	${OBJ}/random.o \
-	${OBJ}/physicalMemMan.o
+	${OBJ}/physicalMemMan.o \
+	${OBJ}/kmalloc.o
 
 
 
