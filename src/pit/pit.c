@@ -7,6 +7,8 @@
 
 uint64_t ticksHandled = 0;
 uint8_t secForTicks = 10;
+
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void pitHandler(struct InterruptRegisters *regs) {
     // kprintf("Pit Handler no %d\n", ticksHandled++);
     ticksHandled++;

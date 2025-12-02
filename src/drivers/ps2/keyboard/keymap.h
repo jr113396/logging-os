@@ -38,8 +38,8 @@
 #define INS      0xFF - 30
 #define DEL      0xFF - 31
 
-extern const uint8_t lowercaseMap[128];
-extern const uint8_t shiftMap[128];
-extern const uint8_t capsMap[128];
-extern const uint8_t shiftCapsMap[128];
+extern uint8_t lowercaseMap[128];
+extern uint8_t shiftMap[128];
+extern uint8_t capsMap[128];
+extern uint8_t shiftCapsMap[128];
 #endif

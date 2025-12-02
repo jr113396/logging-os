@@ -136,6 +136,8 @@ void displayRegisters(struct InterruptRegisters *regs) {
     uint32_t *eip_broken = (uint32_t *)(regs->eip);
     kprintf("EIP: %x, %ux\n", eip_broken, *eip_broken);
 }
+
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void divByZeroHandler(struct InterruptRegisters *regs) {
     kprintf("Division by zero handler being run yay\n");
     asm ( "hlt;\n\t" );

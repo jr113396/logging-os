@@ -12,35 +12,6 @@
                                                                                          //                                   |             |
                                                                                          //           Size of a page in bytes ┘          Number of pages in a table
 
-page_directory pageDirectory;
-page_table pageTableOne;  
-
-// with help from https://www.youtube.com/watch?v=QIGun_BGuDw
-
-int getPageDirIndex(uint32_t addr) {
-    return addr >> 22; // get what page entry contains this addr 0-1023
-}
-
-int getPageTableIndex(uint32_t addr) {
-    return ((addr >> 12) & 1023); // get what page frame contains this addr 0-1023 - removing the flags
-}
-
-int getPagesPhysAddr(uint32_t val) {
-    return (val & ~0xFFF); // remove the flags from the entry and return 
-}
-
-int doesDirEntryExist(uint32_t addr) {
-    uint16_t index = getPageDirIndex(addr);
-    sprintf("[doesDirEntryExist] Found index for addr: %d\r\n", addr); 
-    uint32_t pageDirEntry = pageDirectory.entries[index];
-
-    sprintf("[doesDirEntryExist] entry has value %d - is Present %d\r\n", pageDirEntry, pageDirEntry & PDE_PRESENT);
-    return pageDirEntry & PDE_PRESENT;
-}
-
-void findCorrectPageLocation(uint32_t *addr) {
-    // pageTable = currentPageDir[pageDirIndex]; // -> thing inside of pageDir at pageDirIndex
-    sprintf("");
     //                     ┌──────────┐
     //                     │   Page   │
     //                     │  Direc   │     -> Addr / 1024 / 1024 / 4 
@@ -68,7 +39,32 @@ void findCorrectPageLocation(uint32_t *addr) {
     //                     │          │
     //                     └──────────┘
 
-} 
+page_directory pageDirectory;
+page_table pageTableOne;  
+
+// with help from https://www.youtube.com/watch?v=QIGun_BGuDw
+
+int getPageDirIndex(uint32_t addr) {
+    return addr >> 22; // get what page entry contains this addr 0-1023
+}
+
+int getPageTableIndex(uint32_t addr) {
+    return ((addr >> 12) & 1023); // get what page frame contains this addr 0-1023 - removing the flags
+}
+
+int getPagesPhysAddr(uint32_t val) {
+    return (val & ~0xFFF); // remove the flags from the entry and return 
+}
+
+int doesDirEntryExist(uint32_t addr) {
+    uint16_t index = getPageDirIndex(addr);
+    sprintf("[doesDirEntryExist] Found index for addr: %d\r\n", addr); 
+    uint32_t pageDirEntry = pageDirectory.entries[index];
+
+    sprintf("[doesDirEntryExist] entry has value %d - is Present %d\r\n", pageDirEntry, pageDirEntry & PDE_PRESENT);
+    return pageDirEntry & PDE_PRESENT;
+}
+
 
 void pageDirFlagsBits(uint32_t dir) {
     sprintf("\r\n");
@@ -224,7 +220,7 @@ void pageFaultErrorBits(uint32_t error) {
     sprintf("\r\n\r\n");
 }
 
-uint32_t getNewPageTable() {
+uint32_t *getNewPageTable() {
     sprintf("Getting pages from higher mem\r\n");
     uint32_t *addr = findNextHigherFree(1);
     if (addr == 0) {
@@ -257,7 +253,7 @@ void installPageTabEntry(uint32_t virtAddr, uint32_t physAddr) {
              tabPos = getPageTableIndex(virtAddr);
 
     sprintf("Page Dir Entry Val: %d - addr %d\r\n", pageDirectory.entries[dirPos], getPagesPhysAddr(pageDirectory.entries[dirPos]));
-    uint32_t *dirEntry = getPagesPhysAddr(pageDirectory.entries[dirPos]);
+    uint32_t *dirEntry = (uint32_t *)getPagesPhysAddr(pageDirectory.entries[dirPos]);
     
     sprintf("Read table at addr %d\r\n", dirEntry);
 
@@ -292,7 +288,7 @@ void pageFaultHandler(struct InterruptRegisters *regs) {
     sprintf("Page Dir Index: %d, Page Table Index: %d\r\n", getPageDirIndex(addr), getPageTableIndex(addr));
 
     sprintf("Does Entry Exist Val: %d\r\n", doesDirEntryExist(addr));
-    page_table *newPageTable = getNewPageTable();
+    page_table *newPageTable = (page_table *)getNewPageTable();
     if (newPageTable == 0) {
         sprintf("No more page tables to hand out\r\n");
         pageFaultError(regs);

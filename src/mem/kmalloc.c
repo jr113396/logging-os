@@ -46,7 +46,7 @@ uint32_t *findNextFreeSmallMap(uint16_t numBytes) {
         if (loc == 0) {
             sprintf("FOund a free space\r\n");
             kmallocMaps[index][i/32] |= (1 << mod(i,32)); // set that bit to be 1 as found
-            return kmallocLocations[index] + (1 << index+numIndex) * i; // get the start of the chunk of that size blocks + how far into that chunk you found a free space
+            return kmallocLocations[index] + (1 << (index+numIndex)) * i; // get the start of the chunk of that size blocks + how far into that chunk you found a free space
         }
     }
     sprintf("No space found\r\n");
@@ -102,5 +102,5 @@ void  *kmalloc(uint32_t numBytes) {
 
 uint32_t free(uint32_t *addr) {
     // printf 
-    returnHigherPage(addr);
+    return returnHigherPage(addr);
 }

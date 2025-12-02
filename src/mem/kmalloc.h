@@ -6,5 +6,6 @@
 #define KMALLOC_SPLITS 6
 
 void  *kmalloc(uint32_t numBytes);
+uint32_t free(uint32_t *addr);
 
 #endif
