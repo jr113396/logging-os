@@ -23,6 +23,7 @@ void initKeyboard() {
     install_irq_handler (1, &keyboardHandler); 
 }
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void keyboardHandler(struct InterruptRegisters *regs) {
     uint8_t code = inb(0x60) & 0x7F; // what key is pressed
     uint8_t pressed = (inb(0x60) & 0x80) >> 7; // if the key is pressed or released

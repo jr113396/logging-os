@@ -1,6 +1,6 @@
 #include "keymap.h"
 
-const uint8_t lowercaseMap[128] = {
+uint8_t lowercaseMap[128] = {
     UNMAP,
     ESC,
     '1',
@@ -131,7 +131,7 @@ const uint8_t lowercaseMap[128] = {
     UNMAP
 };
 
-const uint8_t shiftMap[128] = {
+uint8_t shiftMap[128] = {
     UNMAP,
     ESC,
     '!',
@@ -262,7 +262,7 @@ const uint8_t shiftMap[128] = {
     UNMAP
 };
 
-const uint8_t capsMap[128] = {
+uint8_t capsMap[128] = {
     UNMAP,
     ESC,
     '1',
@@ -393,7 +393,7 @@ const uint8_t capsMap[128] = {
     UNMAP
 };
 
-const uint8_t shiftCapsMap[128] = {
+uint8_t shiftCapsMap[128] = {
     UNMAP,
     ESC,
     '!',

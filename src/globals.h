@@ -9,6 +9,8 @@
 #define datareg             0x03D5 // Address on I/O bus
 
 
+#include <stdint.h>
+
 //
 //	=================== PUBLIC FUNCTIONS ===================
 //
@@ -18,6 +20,12 @@ void kmain    ( void *, unsigned int );
 void abort    ( void );
 
 // multiboot.c
-void getbootinfo (void *, unsigned int );
+typedef struct {
+    uint32_t start;
+    uint32_t end;
+    uint32_t length;
+} contigousMemStruct;
 
+void getbootinfo (void *, unsigned int );
+contigousMemStruct getLargestMemory(void *mbd, unsigned int magic);
 #endif //__GLOBALS__

@@ -1,4 +1,6 @@
 #include "stdmem.h"
+#include "physicalMemManager.h"
+#include "paging.h"
 
 void memset(void *loc, char val, uint32_t count) {
     char *p = (char*) loc;
@@ -48,4 +50,9 @@ void *memcpy(void *dst, void *src, uint32_t count) {
     //     }
     // }
     return dst;
+}
+
+void *getPage() {
+    // returns the addr of a free page to use
+    return findNextHigherFree(1);
 }
