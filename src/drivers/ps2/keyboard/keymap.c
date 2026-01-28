@@ -523,3 +523,4 @@ uint8_t shiftCapsMap[128] = {
     UNMAP,
     UNMAP
 };
+

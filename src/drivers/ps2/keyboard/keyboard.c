@@ -28,8 +28,11 @@ void keyboardHandler(struct InterruptRegisters *regs) {
     uint8_t code = inb(0x60) & 0x7F; // what key is pressed
     uint8_t pressed = (inb(0x60) & 0x80) >> 7; // if the key is pressed or released
     uint8_t chr;
+
+    pressed ^=1; // flip pressed so that it is 1 when the key is pressed and 0 when released
+
     if (code < 128) {
-        if (pressed == 0) 
+        if (pressed) 
             currentPressedKeys[code] = 1;
         else
             currentPressedKeys[code] = 0;
@@ -37,7 +40,7 @@ void keyboardHandler(struct InterruptRegisters *regs) {
     switch (code) {
         case 42: // Lshift
         case 54: // Rshift
-            if (pressed == 0) {
+            if (pressed) {
                 shiftOn = true;
             }
             else  {
