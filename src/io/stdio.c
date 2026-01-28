@@ -25,7 +25,7 @@ uint32_t getStr(char *addr, uint32_t maxLen, char ascii) {
                 if (ascii)
                     if (c > 128 || c < ' ')
                         if (c != '\t')
-                            break; // if char is above 128 then not an ascii character so return
+                            continue; // if char is above 128 then not an ascii character so continue and skip
      
                 if (pos >= maxLen - 1) {
                     lStatus("Input too long max %d", maxLen -1);
