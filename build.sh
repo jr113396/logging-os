@@ -64,8 +64,8 @@ ${CC} ${CFLAGS} -o ${OBJ}/paging.o			-c ${SRC}/mem/paging.c
 ${CC} ${CFLAGS} -o ${OBJ}/physicalMemMan.o  -c ${SRC}/mem/physicalMemManager.c
 ${CC} ${CFLAGS} -o ${OBJ}/kmalloc.o			-c ${SRC}/mem/kmalloc.c
 
-#			PIT
-${CC} ${CFLAGS} -o ${OBJ}/pit.o 			-c ${SRC}/pit/pit.c
+#			TIMERS
+${CC} ${CFLAGS} -o ${OBJ}/timers-pit.o 		-c ${SRC}/timers/pit/pit.c
 
 #			PS2 Keyboard Driver
 ${CC} ${CFLAGS} -o ${OBJ}/keyboard-driver.o -c ${SRC}/drivers/ps2/keyboard/keyboard.c
@@ -81,6 +81,7 @@ ${CC} ${CFLAGS} -o ${OBJ}/apps-echo.o -c ${SRC}/apps/echo.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-terminal.o -c ${SRC}/apps/terminal.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-game-of-life.o -c ${SRC}/apps/gameOfLife.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-plotter.o -c ${SRC}/apps/plotter.c
+${CC} ${CFLAGS} -o ${OBJ}/apps-tick-monitor.o -c ${SRC}/apps/tick-monitor.c
 
 ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/boot.o \
@@ -97,7 +98,7 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/idt.o \
 	${OBJ}/idts.o \
 	${OBJ}/stdmem.o \
-	${OBJ}/pit.o \
+	${OBJ}/timers-pit.o \
 	${OBJ}/keyboard-driver.o \
 	${OBJ}/keymap.o \
 	${OBJ}/apps-echo.o \
@@ -113,7 +114,8 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/maths.o \
 	${OBJ}/random.o \
 	${OBJ}/physicalMemMan.o \
-	${OBJ}/kmalloc.o
+	${OBJ}/kmalloc.o \
+    ${OBJ}/apps-tick-monitor.o
 
 
 

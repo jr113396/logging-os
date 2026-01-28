@@ -1,5 +1,5 @@
 #include "gameOfLife.h"
-#include <pit/pit.h>
+#include <timers/pit/pit.h>
 #include <io/vga.h>
 #include <drivers/ps2/keyboard/keyboard.h>
 #include <drivers/ps2/keyboard/keymap.h>

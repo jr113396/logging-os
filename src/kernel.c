@@ -3,7 +3,7 @@
 #include "gdt/gdt.h"
 #include "io/vga.h"
 #include "interupts/idt.h"
-#include "pit/pit.h"
+#include "timers/pit/pit.h"
 #include "drivers/ps2/keyboard/keyboard.h"
 #include "drivers/serial/serial.h"
 #include "apps/echo.h"
@@ -26,7 +26,7 @@ void abort( ) {
 }
 
 void kmain( void* mbd, unsigned int magic ) {
-    uint32_t kernelEndAddr = &kernel_end; // start addr of useable mem
+    uint32_t *kernelEndAddr = (uint32_t *)&kernel_end; // start addr of useable mem
 
     int returnedCodes = 0;
     vgainit( );
@@ -72,7 +72,6 @@ void kmain( void* mbd, unsigned int magic ) {
 
 
     // ^^^^^ UP TO THIS POINT IS SETUP CODE ^^^^^^
-
     // uint32_t *addr, base = 0xC000000;
     // uint32_t a;
 

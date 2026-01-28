@@ -2,7 +2,7 @@
 
 #include "io/vga.h"
 #include <stdio.h>
-#include "pit/pit.h"
+#include "timers/pit/pit.h"
 #include <stdint.h>
 #include <maths.h>
 #include <random.h>
