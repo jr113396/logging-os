@@ -66,6 +66,7 @@ ${CC} ${CFLAGS} -o ${OBJ}/kmalloc.o			-c ${SRC}/mem/kmalloc.c
 
 #			TIMERS
 ${CC} ${CFLAGS} -o ${OBJ}/timers-pit.o 		-c ${SRC}/timers/pit/pit.c
+${CC} ${CFLAGS} -o ${OBJ}/timers-rtc.o 		-c ${SRC}/timers/rtc/rtc.c
 
 #			PS2 Keyboard Driver
 ${CC} ${CFLAGS} -o ${OBJ}/keyboard-driver.o -c ${SRC}/drivers/ps2/keyboard/keyboard.c
@@ -98,6 +99,7 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/idt.o \
 	${OBJ}/idts.o \
 	${OBJ}/stdmem.o \
+    ${OBJ}/timers-rtc.o \
 	${OBJ}/timers-pit.o \
 	${OBJ}/keyboard-driver.o \
 	${OBJ}/keymap.o \

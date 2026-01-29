@@ -6,4 +6,7 @@
 
 void     outb    ( uint16_t, uint8_t  );
 uint8_t inb(uint16_t port);
+
+void cli();
+void sti();
 #endif

@@ -3,6 +3,7 @@
 #include "gdt/gdt.h"
 #include "io/vga.h"
 #include "interupts/idt.h"
+#include "timers/rtc/rtc.h"
 #include "timers/pit/pit.h"
 #include "drivers/ps2/keyboard/keyboard.h"
 #include "drivers/serial/serial.h"
@@ -19,6 +20,18 @@
 
 extern char kernel_end;
 
+void varWrite() {
+    uint32_t *base = (uint32_t *) 0xE00003; // 10485763
+    for (int i = 0; i <1; i++) {
+        sprintf("line: %d\r\n", &varWrite);
+        uint32_t *addr = (base + i);
+        sprintf("Reading from %ux - i %d\r\n", addr, i);
+        uint32_t a = *addr;
+        sprintf("Writing to val %ux\r\n", addr);
+        *addr = 12;
+    }
+}
+
 void abort( ) {
    kprintf ( "\n**** ABORT! ****\n");
    kprintf ( "Processor halted\n");
@@ -34,6 +47,7 @@ void kmain( void* mbd, unsigned int magic ) {
     initGdt();
     setIDT();
     initPit();
+    initRTC();
     initKeyboard();
     returnedCodes += initSerial(1);
 
@@ -106,15 +120,9 @@ void kmain( void* mbd, unsigned int magic ) {
     //     sprintf("Writing to val %ux\r\n", addr);
     //     *addr = 10;
     // }
-    // base = 0xA00000;
-    // for (int i = 0; i <10; i++) {
-    //     addr = (base + i);
-    //     sprintf("Reading from %ux - i %d\r\n", addr, i);
-    //     a = *addr;
-    //     sprintf("Writing to val %ux\r\n", addr);
-    //     *addr = 10;
-    // }
-
+    
+    //varWrite();
+    
     // uint32_t *pageAddr = getPage();
     // viewMem(pageAddr, 4 * 1024);
     // char *msg = "This is a test thing to try and put in a page and see if it works\0";
@@ -129,7 +137,7 @@ void kmain( void* mbd, unsigned int magic ) {
     // for (;;);
     status("3rd Year MyOs Project - Jamie Ross");
     // getbootinfo (mbd, magic);
-    // sprintf("--------\r\n");
+    // sprintf("--------\r\n"); 
 
     // abort( );
     // echo();

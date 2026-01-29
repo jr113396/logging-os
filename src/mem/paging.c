@@ -4,6 +4,9 @@
 #include <interupts/idt.h>
 #include "physicalMemManager.h"
 
+#undef autofillpagetable // when defined the page table is auto filled when a pagefault happens
+#undef pagefaultlisting  // when defined list the data from a page fault
+                         
 // with help from https://wiki.osdev.org/Setting_Up_Paging and https://wiki.osdev.org/Paging and https://isu-rathnayaka.medium.com/develop-your-own-x86-operating-system-os-8-78a25b945dde
 
 // static uint32_t pageDirectory[NUM_PAGES] __attribute__((aligned(PAGE_FRAME_SIZE))) = {0};
@@ -215,7 +218,7 @@ void pageFaultErrorBits(uint32_t error) {
         sprintf("Shadow Stack Bit \t\t -> Shadow Stack access\r\n");
     
     if ((error & (1 <<7)) != 0)
-        sprintf("Software Guard Extensions \t -> Fault due SGX violation -> not related to normal pagin \r\n");
+        sprintf("Software Guard Extensions \t -> Fault due SGX violation -> not related to normal paging \r\n");
 
     sprintf("\r\n\r\n");
 }
@@ -286,24 +289,58 @@ void pageFaultHandler(struct InterruptRegisters *regs) {
     sprintf("******************************\r\n");
     sprintf("Addr: %d, %x\r\n", addr, addr);
     sprintf("Page Dir Index: %d, Page Table Index: %d\r\n", getPageDirIndex(addr), getPageTableIndex(addr));
+    
+    // addr - the addr being written to
+
 
     sprintf("Does Entry Exist Val: %d\r\n", doesDirEntryExist(addr));
-    page_table *newPageTable = (page_table *)getNewPageTable();
-    if (newPageTable == 0) {
-        sprintf("No more page tables to hand out\r\n");
-        pageFaultError(regs);
-    }
-    // sprintf("Got new page table\r\n");
-    if (installPageDirEntry(newPageTable, getPageDirIndex(addr)) == 0) {
-        sprintf("Failed to install new page dir");
-        pageFaultError(regs);
-    }
-    sprintf("Does Entry Exist Val: %d\r\n", doesDirEntryExist(addr));
-    if (doesDirEntryExist(addr) == 0) {
-        sprintf("Page dir does not exist after creation\r\n");
-        pageFaultError(regs);
-    }
-    installPageTabEntry(addr, *findNextHigherFree(1));
+
+    kprintf("Paging\r\n");
+   // kprintf("At addr: 0x%x - %d\r\n", addr, addr);
+   // kprintf("CR2: %ud, DS: %ud\r\n", regs->cr2, regs->ds);
+   // kprintf("edi: %ud, esi: %ud, esp: %ud\r\n", regs->edi, regs->esi, regs->esp);
+   // kprintf("ebx: %ud, edx: %ux, ecx: %ud, eax: %ud\r\n", regs->ebx, regs->edx, regs->ecx, regs->eax);
+   // kprintf("eip: %ud, csm: %ux, eflags: %ud, useresp: %ud, ss: %ud\r\n", regs->eip, regs->csm, regs->eflags, regs->useresp, regs->ss);
+    #ifdef pagefaultlisting
+        kprintf("Register\tAddr \tValue\r\n");
+        kprintf("CR2 Val:\t--\t\t \t%ud \t%ud\r\n",                   (uint32_t *)(regs->cr2),     0);
+        kprintf("DS Val: \t%d\t \t%ud \t%ud\r\n",  (regs->ds),     *(uint32_t *)(regs->ds),      (*(uint32_t **)(regs->ds)));
+        kprintf("edi Val:\t%d\t \t%ud \t%ud\r\n", (regs->edi),     *(uint32_t *)(regs->edi),     (*(uint32_t **)(regs->edi)));
+        kprintf("esi Val:\t%d\t \t%ud \t%ud\r\n", (regs->esi),     *(uint32_t *)(regs->esi),     (*(uint32_t **)(regs->esi)));
+        kprintf("ebp Val:\t%d\t \t%ud \t%ud\r\n", (regs->ebp),     *(uint32_t *)(regs->ebp),     (*(uint32_t **)(regs->ebp)));
+        kprintf("esp Val:\t%d\t \t%ud \t%ud\r\n", (regs->esp),     *(uint32_t *)(regs->esp),     (*(uint32_t **)(regs->esp)));
+        kprintf("ebx Val:\t%d\t \t%ud \t%ud\r\n", (regs->ebx),     *(uint32_t *)(regs->ebx),     (*(uint32_t **)(regs->ebx)));
+        kprintf("edx Val:\t%d\t \t%ud \t%ud\r\n", (regs->edx),     *(uint32_t *)(regs->edx),     (*(uint32_t **)(regs->edx)));
+        kprintf("ecx Val:\t%d\t \t%ud \t%ud\r\n", (regs->ecx),     *(uint32_t *)(regs->ecx),     (*(uint32_t **)(regs->ecx)));
+        kprintf("eax Val:\t--\t \t%ud \t%ud\r\n",                   (uint32_t *)(regs->eax),     0); //(*(uint32_t **)(regs->eax))); // also causes a page fault
+        kprintf("eip Val:\t%d\t \t%ud \t%ud\r\n", (regs->eip),     *(uint32_t *)(regs->eip),     (*(uint32_t **)(regs->eip)));
+        kprintf("cms Val:\t%d\t \t%ud \t%ud\r\n", (regs->csm),     *(uint32_t *)(regs->csm),     (*(uint32_t **)(regs->csm)));
+        kprintf("efg Val:\t%d\t \t%ud \t%ud\r\n", (regs->eflags),  *(uint32_t *)(regs->eflags),  0);
+        kprintf("usp Val:\t%d\t \t%ud \t%ud\r\n", (regs->useresp), *(uint32_t *)(regs->useresp), 0); 
+        kprintf("ss  Val:\t%d\t \t%ud \t%ud\r\n", (regs->ss),      *(uint32_t *)(regs->ss),      0);
+        asm("hlt;"::);
+    #endif
+
+
+    // Make page table
+    #ifdef autofillpagetable
+        page_table *newPageTable = (page_table *)getNewPageTable();
+        if (newPageTable == 0) {
+            sprintf("No more page tables to hand out\r\n");
+            pageFaultError(regs);
+        }
+        // sprintf("Got new page table\r\n");
+        if (installPageDirEntry(newPageTable, getPageDirIndex(addr)) == 0) {
+            sprintf("Failed to install new page dir");
+            pageFaultError(regs);
+        }
+        sprintf("Does Entry Exist Val: %d\r\n", doesDirEntryExist(addr));
+        if (doesDirEntryExist(addr) == 0) {
+            sprintf("Page dir does not exist after creation\r\n");
+            pageFaultError(regs);
+        }
+        installPageTabEntry(addr, *findNextHigherFree(1));
+    #endif
     // pageFaultError(regs);
 }
 

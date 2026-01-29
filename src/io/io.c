@@ -18,3 +18,21 @@ inline uint8_t inb(uint16_t port) {
   );
   return chr;
 }
+
+inline void sti() {
+    // enable interupts
+    asm volatile (
+        "sti"
+        :
+        :
+    );
+}
+
+inline void cli() {
+    // disable interupts
+    asm volatile (
+        "cli"
+        :
+        :
+    );
+}
