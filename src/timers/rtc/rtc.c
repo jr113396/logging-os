@@ -85,7 +85,8 @@ void printTime() {
     datetime time = getCurrentTime();
    
     char *day[] = {"", "Sun", "Mon", "Tue", "Wed", "Thur", "Fri", "Sat"};
-    lStatus("%2d:%2d:%2d - %s - %2d-%2d-20%2d", time.hours, time.minutes, time.seconds, day[time.weekday], time.day, time.month, time.year);
+    char *month[] = {"", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+    lStatus("%2d:%2d:%2d - %s %s %2d 20%2d ", time.hours, time.minutes, time.seconds, day[time.weekday], month[time.month], time.day, time.year);
 }
 
 void rtcHandler(struct InterruptRegisters *regs) {
