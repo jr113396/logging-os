@@ -3,17 +3,20 @@
 #include <stdio.h>
 #include <interupts/idt.h>
 #include "physicalMemManager.h"
+#include "pageFault.h"
+#include "invalidOpcodeFault.h"
 
 #undef autofillpagetable // when defined the page table is auto filled when a pagefault happens
 #undef pagefaultlisting  // when defined list the data from a page fault
+#define pagingLogging
                          
 // with help from https://wiki.osdev.org/Setting_Up_Paging and https://wiki.osdev.org/Paging and https://isu-rathnayaka.medium.com/develop-your-own-x86-operating-system-os-8-78a25b945dde
 
 // static uint32_t pageDirectory[NUM_PAGES] __attribute__((aligned(PAGE_FRAME_SIZE))) = {0};
 // static uint32_t pageTableOne[NUM_PAGES] __attribute__((aligned(PAGE_FRAME_SIZE))) = {0}; // gives the first 4194304 bytes -> (1024 * 4) * 1024
 //                                                                                          //                                   ^             ^
-                                                                                         //                                   |             |
-                                                                                         //           Size of a page in bytes ┘          Number of pages in a table
+                                                                                            //                                   |             |
+                                                                                            //           Size of a page in bytes ┘          Number of pages in a table
 
     //                     ┌──────────┐
     //                     │   Page   │
@@ -45,8 +48,6 @@
 page_directory pageDirectory;
 page_table pageTableOne;  
 
-// with help from https://www.youtube.com/watch?v=QIGun_BGuDw
-
 int getPageDirIndex(uint32_t addr) {
     return addr >> 22; // get what page entry contains this addr 0-1023
 }
@@ -55,9 +56,13 @@ int getPageTableIndex(uint32_t addr) {
     return ((addr >> 12) & 1023); // get what page frame contains this addr 0-1023 - removing the flags
 }
 
-int getPagesPhysAddr(uint32_t val) {
-    return (val & ~0xFFF); // remove the flags from the entry and return 
+uint32_t *getPagesPhysAddr(uint32_t val) {
+    return (uint32_t *)(val & ~0xFFF); // remove the flags from the entry and return 
 }
+
+page_directory getPageDir() {
+    return pageDirectory;
+} 
 
 int doesDirEntryExist(uint32_t addr) {
     uint16_t index = getPageDirIndex(addr);
@@ -69,159 +74,6 @@ int doesDirEntryExist(uint32_t addr) {
 }
 
 
-void pageDirFlagsBits(uint32_t dir) {
-    sprintf("\r\n");
-    sprintf("******************************\r\n");
-    sprintf("*                            *\r\n");
-    sprintf("*       DIR FLAGS            *\r\n");
-    sprintf("*                            *\r\n");
-    sprintf("******************************\r\n");
-
-    if ((dir & PDE_PRESENT) != 0)
-        sprintf("Dir Present\r\n");
-    else
-        sprintf("Dir Not Present\r\n");
-
-    if ((dir & PDE_READ_WRITE) != 0)
-        sprintf("Dir Read/Write Access\r\n");
-    else
-        sprintf("Dir Read Only\r\n");
-
-    if ((dir & PDE_USER) != 0)
-        sprintf("Dir Access By All\r\n");
-    else
-        sprintf("Dir SuperUser Only\r\n");
-
-    if ((dir & PDE_WRITE_THROUGH) != 0)
-        sprintf("Dir Write Through Enabled\r\n");
-    else
-        sprintf("Dir Write Back Enabled\r\n");
-
-    if ((dir & PDE_CACHE_DISABLE) != 0)
-        sprintf("Dir Page Cache Disable\r\n");
-    else
-        sprintf("Dir Page Cache Enabled\r\n");
-
-    if ((dir & PDE_ACCESSED) != 0)
-        sprintf("Dir Accessed\r\n");
-    else
-        sprintf("Dir Not Accessed\r\n");
-
-    if ((dir & PDE_DIRTY) != 0)
-        sprintf("Dir Dirty\r\n");
-    else
-        sprintf("Dir Not Dirty\r\n");
-
-    if ((dir & PDE_PAGE_SIZE) != 0)
-        sprintf("Dir 4MB page\r\n");
-    else
-        sprintf("Dir 4KB page\r\n");
-
-    if ((dir & PDE_GLOBAL) != 0)
-        sprintf("Dir Global\r\n");
-    else
-        sprintf("Dir Not Global\r\n");
-
-    if ((dir & PDE_PAT) != 0)
-        sprintf("Dir PAT\r\n");
-    else
-        sprintf("Dir Not PAT\r\n");
-
-    sprintf("\r\n\r\n");
-}
-
-void pageTableFlagsBits(uint32_t tab) {
-    sprintf("\r\n");
-    sprintf("******************************\r\n");
-    sprintf("*                            *\r\n");
-    sprintf("*       TAB FLAGS            *\r\n");
-    sprintf("*                            *\r\n");
-    sprintf("******************************\r\n");
-    sprintf("Tab Bits: %ub\r\n", tab);
-    if ((tab & PTE_PRESENT) != 0)
-        sprintf("Tab Present\r\n");
-    else
-        sprintf("Tab Not Present\r\n");
-
-    if ((tab & PTE_READ_WRITE) != 0)
-        sprintf("Tab Read/Write Access\r\n");
-    else
-        sprintf("Tab Read Only\r\n");
-
-    if ((tab & PTE_USER) != 0)
-        sprintf("Tab Access By All\r\n");
-    else
-        sprintf("Tab SuperUser Only\r\n");
-
-    if ((tab & PTE_WRITE_THROUGH) != 0)
-        sprintf("Tab Write Through Enabled\r\n");
-    else
-        sprintf("Tab Write Back Enabled\r\n");
-
-    if ((tab & PTE_CACHE_DISABLE) != 0)
-        sprintf("Tab Page Cache Disable\r\n");
-    else
-        sprintf("Tab Page Cache Enabled\r\n");
-
-    if ((tab & PTE_ACCESSED) != 0)
-        sprintf("Tab Accessed\r\n");
-    else
-        sprintf("Tab Not Accessed\r\n");
-
-    if ((tab & PTE_DIRTY) != 0)
-        sprintf("Tab dirty\r\n");
-    else
-        sprintf("Tab Not dirty\r\n");
-
-    if ((tab & PTE_GLOBAL) != 0)
-        sprintf("Tab Global\r\n");
-    else
-        sprintf("Tab Not Global\r\n");
-
-    sprintf("\r\n\r\n");
-}
-
-void pageFaultErrorBits(uint32_t error) {
-    sprintf("\r\n");
-    sprintf("******************************\r\n");
-    sprintf("*                            *\r\n");
-    sprintf("*       Page Fault Bits      *\r\n");
-    sprintf("*                            *\r\n");
-    sprintf("******************************\r\n");
-    sprintf("%032b\r\n", error);
-
-    sprintf("Present Bit \t\t\t -> ");
-    if ((error & (1 << 0)) != 0)
-        sprintf("Page Protection Violation\r\n");
-    else
-        sprintf("Non Present Page\r\n");
-
-    sprintf("Write Bit \t\t\t -> ");
-    if ((error & (1 << 1)) != 0)
-        sprintf("Write Access\r\n");
-    else
-        sprintf("Read Access\r\n");
-
-    if ((error & (1 << 2)) != 0)
-        sprintf("User Bit \t\t\t -> CPL = 3\r\n");
-
-    if ((error & (1 << 3)) != 0)
-        sprintf("Reserved Write Bit \t\t -> One or more page dir entries contain resvd bits set to 1\r\n");
-
-    if ((error & (1 << 4)) != 0)
-        sprintf("Instruction Fetch Bit \t\t -> Page Fault caused by instruction fetch\r\n");
-
-    if ((error & (1 << 5)) != 0)
-        sprintf("Protection Key Bit \t\t -> Protection key violation\r\n");
-
-    if ((error & (1 << 6)) != 0)
-        sprintf("Shadow Stack Bit \t\t -> Shadow Stack access\r\n");
-    
-    if ((error & (1 <<7)) != 0)
-        sprintf("Software Guard Extensions \t -> Fault due SGX violation -> not related to normal paging \r\n");
-
-    sprintf("\r\n\r\n");
-}
 
 uint32_t *getNewPageTable() {
     sprintf("Getting pages from higher mem\r\n");
@@ -244,8 +96,12 @@ int installPageDirEntry(page_table *table, uint16_t pos) {
     // install a page directory entry at a position in the page dir entry
     sprintf("Pos: %d\r\n", pos);
     sprintf("Got table value: %ud\r\n", (table->entries));
-    pageDirectory.entries[pos] = ((uint32_t)(table->entries)) | PDE_USER | PDE_READ_WRITE | PDE_PRESENT;
-    
+    #ifdef pagingLogging
+        pageDirectory.entries[pos] = ((uint32_t)(table->entries)) | PDE_USER | PDE_READ_WRITE | PDE_PRESENT;//(0b110 << 9); // set the corresponding avl bits but dont set it as present as we want page faults
+        // sprintf("Installed page dir entry with avl bits 0b110\r\n");
+    #else
+        pageDirectory.entries[pos] = ((uint32_t)(table->entries)) | PDE_USER | PDE_READ_WRITE | PDE_PRESENT;
+    #endif
     return 1;
 }
 
@@ -266,82 +122,105 @@ void installPageTabEntry(uint32_t virtAddr, uint32_t physAddr) {
     sprintf("Set Tab Entry to %ud - %ub\r\n", physAddr | PTE_USER | PTE_READ_WRITE | PTE_PRESENT, physAddr | PTE_USER | PTE_READ_WRITE | PTE_PRESENT);
 }
 
-// called if the pages actually fault
-void pageFaultError(struct InterruptRegisters *regs) {
-    pageFaultErrorBits(regs->eflags);
-    kprintf("Got err code %d - %b at addr %ud\r\n", regs->eflags, regs->eflags, regs->cr2);
-    kprintf("Page Fault\r\n");
-    kprintf("Processor Halting\r\n");
-    asm ( "hlt;\n\t" );
 
+void disablePages() {
+    page_table *pg1 = (page_table *)pageDirectory.entries[0];  
+
+    // for (int i = 800; i < NUM_PAGES; i++) {
+    //     // disable the top pages of page table 1
+    //     pg1->entries[i] &= ~(PDE_PRESENT); // remove present bit
+    //     pg1->entries[i] &= ~(0b111 << 9); // clear old avl bits
+    //     pg1->entries[i] |= (0b111 << 9); // set new avl bits
+    // }
+
+    // disable all pages that arent to do with the kernel so ones from kmalloc
+    for (int i = 1; i < NUM_PAGES; i++) {
+       if (pageDirectory.entries[i] & (PDE_PRESENT)) {
+        
+            //sprintf("Page dir %d was present - changing\r\n", i);
+            pageDirectory.entries[i] &= ~(PDE_PRESENT); // clear the present bit
+            // and then add that it has been modified by this function by setting the avl bits to 110
+            pageDirectory.entries[i] &= ~(0b111 << avlBitPos); // clear the avl bits
+            pageDirectory.entries[i] |= (0b110 << avlBitPos); // and set them to the correct values
+            
+        }
+    }
 }
 
-void pageFaultHandler(struct InterruptRegisters *regs) {
-    // pageFaultErrorBits(0xFF);
+void installNewPageFull(uint32_t addr, uint32_t physAddr) {
+    // so we have a page directory
+    // first get the page directory and table this addr should be in
+    uint32_t dirIndex = getPageDirIndex(addr),
+             tabIndex = getPageTableIndex(addr);
+
+
+
+    kprintf("INSTALLING NEW PAGE\r\n");
     
-    uint32_t addr = regs->cr2;
+    // does the page dir entry exist?
+    sprintf("Installing New Page at dir: %d - tab: %d\r\n", dirIndex, tabIndex);
     
-    sprintf("\r\n");
-    sprintf("******************************\r\n");
-    sprintf("*                            *\r\n");
-    sprintf("*    Page Fault Handler      *\r\n");
-    sprintf("*                            *\r\n");
-    sprintf("******************************\r\n");
-    sprintf("Addr: %d, %x\r\n", addr, addr);
-    sprintf("Page Dir Index: %d, Page Table Index: %d\r\n", getPageDirIndex(addr), getPageTableIndex(addr));
+    // PAGE DIR
+    // does the page dir entry exist / is present
+    uint32_t pageDirEntryVal = pageDirectory.entries[dirIndex];
+    uint32_t pageDirEntIsPresent = pageDirEntryVal & PDE_PRESENT;
+    uint32_t *pageDirPhysVal = getPagesPhysAddr(pageDirEntryVal);
+
+    if (pageDirPhysVal) { // not 0 
+        // then there is a page table already installed in this location
+        if (pageDirEntIsPresent) {
+            // the table is present so we are all good yay 
+            kprintf("PDE is already present\r\n");
+        }
+        else {
+            // the table is not present but is installed
+            // so lets make it present with the correct addr
+            pageDirectory.entries[dirIndex] |= PDE_PRESENT;
+            // now that PDE should be valid
+            kprintf("Made the PDE present\r\n");
+        }
+    } else {
+        // otherwise there is no page dir entry linking to a page table
+        // so we need to make a new page table to link to this page table entry
+        kprintf("No PDE - Dealing with later\r\n");
+        return;
+    }
     
-    // addr - the addr being written to
+    // now we are going to re get the PDE in case it has changed
+    pageDirEntryVal = pageDirectory.entries[dirIndex]; 
+    // and get the phys addr corresponding to it - this will be the addr of the page table
+    pageDirPhysVal = getPagesPhysAddr(pageDirEntryVal);
 
+    kprintf("Dir Ind: %d,  Tab Ind: %d\r\n", dirIndex, tabIndex);
+    kprintf("Page Dir Ent Val:      %d\r\n", pageDirEntryVal);
+    kprintf("Page Dir Phy Val:      %d\r\n", pageDirPhysVal);
+    kprintf("Page Dir Ent Is Pres:  %d\r\n", pageDirEntIsPresent);
+    kprintf("=====================\r\n");
+    
+    // get the page table from the phys addr provided by the PTE
+    page_table *pt = (page_table *) *pageDirPhysVal;
+    
+    // now we are dealing with the page table 
+    // so we need to check to see if the page table entry for this already exists or not
+    uint32_t pageTabEntryVal = pt->entries[tabIndex];
+    uint32_t *pageTabPhysVal = getPagesPhysAddr(pageTabEntryVal);
+    uint32_t pageTabIsPres = pageTabEntryVal & PTE_PRESENT;
+    
+    kprintf("Page Tab Ent Val: %b\r\n", pageTabEntryVal);
+    kprintf("Page Tab Phy Val: %d\r\n", pageTabPhysVal);
+    kprintf("Page Tab Is Pres: %d\r\n", pageTabIsPres);
+    if (pageTabIsPres) {
+        kprintf("PTE is already present\r\n");
+        // if the page table is already present
+        // then dont do anything as its already setup
 
-    sprintf("Does Entry Exist Val: %d\r\n", doesDirEntryExist(addr));
-
-    kprintf("Paging\r\n");
-   // kprintf("At addr: 0x%x - %d\r\n", addr, addr);
-   // kprintf("CR2: %ud, DS: %ud\r\n", regs->cr2, regs->ds);
-   // kprintf("edi: %ud, esi: %ud, esp: %ud\r\n", regs->edi, regs->esi, regs->esp);
-   // kprintf("ebx: %ud, edx: %ux, ecx: %ud, eax: %ud\r\n", regs->ebx, regs->edx, regs->ecx, regs->eax);
-   // kprintf("eip: %ud, csm: %ux, eflags: %ud, useresp: %ud, ss: %ud\r\n", regs->eip, regs->csm, regs->eflags, regs->useresp, regs->ss);
-    #ifdef pagefaultlisting
-        kprintf("Register\tAddr \tValue\r\n");
-        kprintf("CR2 Val:\t--\t\t \t%ud \t%ud\r\n",                   (uint32_t *)(regs->cr2),     0);
-        kprintf("DS Val: \t%d\t \t%ud \t%ud\r\n",  (regs->ds),     *(uint32_t *)(regs->ds),      (*(uint32_t **)(regs->ds)));
-        kprintf("edi Val:\t%d\t \t%ud \t%ud\r\n", (regs->edi),     *(uint32_t *)(regs->edi),     (*(uint32_t **)(regs->edi)));
-        kprintf("esi Val:\t%d\t \t%ud \t%ud\r\n", (regs->esi),     *(uint32_t *)(regs->esi),     (*(uint32_t **)(regs->esi)));
-        kprintf("ebp Val:\t%d\t \t%ud \t%ud\r\n", (regs->ebp),     *(uint32_t *)(regs->ebp),     (*(uint32_t **)(regs->ebp)));
-        kprintf("esp Val:\t%d\t \t%ud \t%ud\r\n", (regs->esp),     *(uint32_t *)(regs->esp),     (*(uint32_t **)(regs->esp)));
-        kprintf("ebx Val:\t%d\t \t%ud \t%ud\r\n", (regs->ebx),     *(uint32_t *)(regs->ebx),     (*(uint32_t **)(regs->ebx)));
-        kprintf("edx Val:\t%d\t \t%ud \t%ud\r\n", (regs->edx),     *(uint32_t *)(regs->edx),     (*(uint32_t **)(regs->edx)));
-        kprintf("ecx Val:\t%d\t \t%ud \t%ud\r\n", (regs->ecx),     *(uint32_t *)(regs->ecx),     (*(uint32_t **)(regs->ecx)));
-        kprintf("eax Val:\t--\t \t%ud \t%ud\r\n",                   (uint32_t *)(regs->eax),     0); //(*(uint32_t **)(regs->eax))); // also causes a page fault
-        kprintf("eip Val:\t%d\t \t%ud \t%ud\r\n", (regs->eip),     *(uint32_t *)(regs->eip),     (*(uint32_t **)(regs->eip)));
-        kprintf("cms Val:\t%d\t \t%ud \t%ud\r\n", (regs->csm),     *(uint32_t *)(regs->csm),     (*(uint32_t **)(regs->csm)));
-        kprintf("efg Val:\t%d\t \t%ud \t%ud\r\n", (regs->eflags),  *(uint32_t *)(regs->eflags),  0);
-        kprintf("usp Val:\t%d\t \t%ud \t%ud\r\n", (regs->useresp), *(uint32_t *)(regs->useresp), 0); 
-        kprintf("ss  Val:\t%d\t \t%ud \t%ud\r\n", (regs->ss),      *(uint32_t *)(regs->ss),      0);
-        asm("hlt;"::);
-    #endif
-
-
-    // Make page table
-    #ifdef autofillpagetable
-        page_table *newPageTable = (page_table *)getNewPageTable();
-        if (newPageTable == 0) {
-            sprintf("No more page tables to hand out\r\n");
-            pageFaultError(regs);
-        }
-        // sprintf("Got new page table\r\n");
-        if (installPageDirEntry(newPageTable, getPageDirIndex(addr)) == 0) {
-            sprintf("Failed to install new page dir");
-            pageFaultError(regs);
-        }
-        sprintf("Does Entry Exist Val: %d\r\n", doesDirEntryExist(addr));
-        if (doesDirEntryExist(addr) == 0) {
-            sprintf("Page dir does not exist after creation\r\n");
-            pageFaultError(regs);
-        }
-        installPageTabEntry(addr, *findNextHigherFree(1));
-    #endif
-    // pageFaultError(regs);
+    } else {
+        kprintf("SET PTE to Present and addr\r\n");
+        // make the page table present
+        // and make it have the correct addr
+        pt->entries[tabIndex] = physAddr | PTE_USER | PTE_READ_WRITE | PTE_PRESENT;
+        kprintf("New Val: %b\r\n", pt->entries[tabIndex]);
+    }
 }
 
 
@@ -355,7 +234,7 @@ void initPaging() {
         // set to present and r/w and at supervisor level
         pageTableOne.entries[i] = (i * 0x1000) | PTE_USER | PTE_READ_WRITE | PTE_PRESENT; // | PAGING_SUPERVISOR | PAGING_WRITE | PAGING_PRESENT;
         //                  ^
-        // Mapping the addr [i]Kb to page [i] so 20-21kb is in page 20
+    // Mapping the addr [i]Kb to page [i] so 20-21kb is in page 20
         // so this maps from addr 0 - 1024Kb - 1MB
     
     
@@ -365,7 +244,11 @@ void initPaging() {
     pageDirectory.entries[0] = ((unsigned int)pageTableOne.entries) | 3;// | PAGING_SUPERVISOR | PAGING_WRITE | PAGING_PRESENT;
 
     install_isr_handler (14, &pageFaultHandler); 
+    install_isr_handler (6, &invalidOpcodeHandler);
 
     loadPageDirectory(pageDirectory.entries);
     enablePaging();
+    #ifdef pagingLogging
+        // disablePages(); // disable page for the logging system
+    #endif
 }

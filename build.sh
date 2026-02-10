@@ -61,6 +61,8 @@ ${CC} ${CFLAGS} -o ${OBJ}/idt.o 			-c ${SRC}/interupts/idt.c
 #			MEM
 ${CC} ${CFLAGS} -o ${OBJ}/stdmem.o 			-c ${SRC}/mem/stdmem.c
 ${CC} ${CFLAGS} -o ${OBJ}/paging.o			-c ${SRC}/mem/paging.c
+${CC} ${CFLAGS} -o ${OBJ}/pageFault.o   	-c ${SRC}/mem/pageFault.c
+${CC} ${CFLAGS} -o ${OBJ}/invalidOpcodeFault.o -c ${SRC}/mem/invalidOpcodeFault.c
 ${CC} ${CFLAGS} -o ${OBJ}/physicalMemMan.o  -c ${SRC}/mem/physicalMemManager.c
 ${CC} ${CFLAGS} -o ${OBJ}/kmalloc.o			-c ${SRC}/mem/kmalloc.c
 
@@ -110,6 +112,8 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
     ${OBJ}/serial-driver.o \
 	${OBJ}/paging.o \
 	${OBJ}/paging_s.o \
+    ${OBJ}/pageFault.o \
+    ${OBJ}/invalidOpcodeFault.o \
 	${OBJ}/protected.o \
 	${OBJ}/protected_s.o \
 	${OBJ}/apps-plotter.o \

@@ -62,16 +62,29 @@ void kmain( void* mbd, unsigned int magic ) {
     sprintf("Free Mem Found %d - %d -> %d Kb\r\n", freeMem.start, freeMem.end, ((freeMem.length /(1024 * 4))/4));
     sprintf("Setting Mem Start to %ud - %d bytes after grub mem start\r\n", kernelEndAddr, kernelEndAddr-freeMem.start);
     setMemStart(kernelEndAddr);
+
     
-    sprintf("Kernel End: %d\r\n", kernelEndAddr);
-    uint32_t *addr = kmalloc(100);
-    addr = kmalloc(200);
+    sprintf("Kernel End: %d\r\n\n", kernelEndAddr);
+
+    installNewPageFull(0x1C000, 0x1C000);
+    installNewPageFull(0x1C000, 0x1C000);
+
+    // installNewPageFull(0xFFFF0000,0xFFFF0000);
+    // uint32_t *addr = kmalloc(200);
+    // kprintf("Addr: %d\r\n", addr);
+    // *addr = 300;
     // addr = kmalloc(500);
+    // *addr = 10;
     // addr = kmalloc(600);
+    // *addr = 10;
     // addr = kmalloc(1000);
+    // *addr = 10;
     // addr = kmalloc(1050);
+    // *addr = 10;
     // addr = kmalloc(2100);
+    // *addr = 10;
     // addr = kmalloc(4000);
+    // *addr = 10;
     // addr = kmalloc(5000);
     // uint32_t *addr = findNextHigherFree(1);
     // uint32_t *addr2 = findNextHigherFree(32);
@@ -79,7 +92,7 @@ void kmain( void* mbd, unsigned int magic ) {
     // uint32_t *addr4 = findNextHigherFree(31);
 
     // sprintf("Got allocated addr: %ud\r\n", addr);
-    returnHigherPage(addr);
+    // returnHigherPage(addr);
     // returnHigherPage(addr2);
     // returnHigherPage(addr3);
     // returnHigherPage(addr4);
@@ -120,9 +133,16 @@ void kmain( void* mbd, unsigned int magic ) {
     //     sprintf("Writing to val %ux\r\n", addr);
     //     *addr = 10;
     // }
-    
-    //varWrite();
-    
+   
+       
+    while (1) {
+
+        for (int i = 0; i < 100; i++) {
+            pauseTimeMs(100);
+            // kprintf("running on i: %d - %x\r\n", i, loc);
+        }
+    }
+
     // uint32_t *pageAddr = getPage();
     // viewMem(pageAddr, 4 * 1024);
     // char *msg = "This is a test thing to try and put in a page and see if it works\0";
@@ -138,7 +158,7 @@ void kmain( void* mbd, unsigned int magic ) {
     status("3rd Year MyOs Project - Jamie Ross");
     // getbootinfo (mbd, magic);
     // sprintf("--------\r\n"); 
-
+    // returnedCodes++;
     // abort( );
     // echo();
     if (returnedCodes == 0) {

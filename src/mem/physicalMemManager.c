@@ -145,15 +145,10 @@ uint32_t *findNextFreePage(uint8_t numPages, uint32_t *map, uint32_t length, uin
                     int pageNum = (i * 4 * 8) + (bitPos); 
                     uint32_t *memStartLoc = start + (pageNum * PAGE_SIZE);
                     sprintf("Allocating mem at location: %d - frame %d\r\n", memStartLoc, pageNum);
-                    memStartLoc = (uint32_t *)((uint32_t) memStartLoc & (~(0b111 << 8)));
-                    if (numPages == 1){
-                        sprintf("Set avl bits to be 110\r\n");
-                        memStartLoc = (uint32_t *)(((uint32_t) memStartLoc) | (0b110 << 8)); // set avl bits to be 110 to specify this is 1 page only
-                    }
-                    else {
-                        sprintf("Set avl bits to be 111\r\n");
-                        memStartLoc = (uint32_t *)(((uint32_t) memStartLoc) | (0b111 << 8)); // otherwise set avl bits to 111 to specify multiple pages
-                    }
+                    memStartLoc = (uint32_t *)((uint32_t) memStartLoc & (~(0b111 << 9)));
+                    sprintf("Set avl bits to be 110\r\n");
+                    memStartLoc = (uint32_t *)(((uint32_t) memStartLoc) | (0b110 << 9));                                  
+
 
                     // sprintf("After setting avl bits %d - avl bits %ub - %ub\r\n", memStartLoc, ((uint32_t) memStartLoc), ((uint32_t) memStartLoc >> 8));
 

@@ -44,7 +44,7 @@ uint32_t *findNextFreeSmallMap(uint16_t numBytes) {
         uint32_t loc = kmallocMaps[index][i/32] & (1 << mod(i, 32));
         sprintf("Loc: %d\r\n", loc);
         if (loc == 0) {
-            sprintf("FOund a free space\r\n");
+            sprintf("Found a free space\r\n");
             kmallocMaps[index][i/32] |= (1 << mod(i,32)); // set that bit to be 1 as found
             return kmallocLocations[index] + (1 << (index+numIndex)) * i; // get the start of the chunk of that size blocks + how far into that chunk you found a free space
         }
@@ -97,6 +97,23 @@ void  *kmalloc(uint32_t numBytes) {
         sprintf("[kmalloc] Allocating %d pages for %d bytes\r\n", numPages, numBytes);
         addr = findNextHigherFree(numPages);
     }
+
+    // now that we have an addr
+    // install it into the page dir
+    page_table *newPT = (page_table *)findNextHigherFree(1);
+
+    if (newPT == 0) {
+        sprintf("[KMALLOC] Couldnt malloc page table\r\n");
+        // return 0 as error
+        return 0;
+    }
+    if (installPageDirEntry(newPT, getPageDirIndex((uint32_t)addr)) == 0) {
+        sprintf("[KMALLOC] Failed to install new page table\r\n");
+        return 0;
+    }
+    
+    installPageTabEntry((uint32_t)addr, (uint32_t)addr);
+    sprintf("Installed new page tab at addr: %d\r\n", addr);
     return addr;
 }
 

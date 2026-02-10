@@ -4,7 +4,8 @@
 #include <io/vga.h>
 #include <stdint.h>
 #include <io/io.h>
-
+#include <mem/paging.h>
+#include <stdio.h>
 uint64_t ticksHandled = 0;
 uint8_t secForTicks = 10;
 
@@ -12,6 +13,12 @@ uint8_t secForTicks = 10;
 void pitHandler(struct InterruptRegisters *regs) {
     // kprintf("Pit Handler no %d\n", ticksHandled++);
     ticksHandled++;
+    if (isThereNewData()) {// is there new page data?
+
+        sprintf("Got new values\r\n");
+        readLastAddr(); // if so read it and sprintf it
+    }
+    //    disablePages(); // turn off the pages
 }
 
 uint64_t getTickCount() {
