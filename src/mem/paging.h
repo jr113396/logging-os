@@ -10,7 +10,8 @@
 #define NUM_PAGES 1024
 #define PAGE_FRAME_SIZE 4096
 #define PAGE_SIZE 4096
-#define avlBitPos 8
+#define avlBitPos 9
+
 
 
 typedef struct {
@@ -56,12 +57,14 @@ extern void loadPageDirectory(uint32_t *);
 extern void enablePaging();
 
 void initPaging();
-
+uint32_t *getPagesPhysAddr(uint32_t val);
 int doesDirEntryExist(uint32_t addr);
 uint32_t *getNewPageTable();
 page_directory getPageDir(); // returns the current page dir addr
 int getPageTableIndex(uint32_t addr);
 void installNewPageFull(uint32_t addr, uint32_t phsyAddr);
+void listPresentPages();
+void setDirEntPres(uint32_t dirIndex);
 
 // ********************************
 // *         Logging Stuff        *

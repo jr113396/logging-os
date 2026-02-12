@@ -9,6 +9,12 @@
 uint64_t ticksHandled = 0;
 uint8_t secForTicks = 10;
 
+static uint8_t autoClearPages = 1;
+
+void setAutoClearPages(uint8_t val) {
+    autoClearPages = val;
+}
+
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 void pitHandler(struct InterruptRegisters *regs) {
     // kprintf("Pit Handler no %d\n", ticksHandled++);
@@ -18,7 +24,9 @@ void pitHandler(struct InterruptRegisters *regs) {
         sprintf("Got new values\r\n");
         readLastAddr(); // if so read it and sprintf it
     }
-    //    disablePages(); // turn off the pages
+    if (autoClearPages) {
+        disablePages(); // turn off the pages
+    }
 }
 
 uint64_t getTickCount() {

@@ -7,10 +7,9 @@
 
 uint32_t bitmap[LENGTH_OF_BITMAP] = {0};
 uint32_t *lastAccessed = bitmap;
-uint32_t *memStart = 0, // this needs to be set
-         *lowerMemStart = 0; // this actually does start at 0 - confusing i know
-char *a = "SOMETHING";
-
+uint32_t *memStart = 0, // this needs to be set to the page dir ent 1+
+         *lowerMemStart = 0,  // this needs to be set to the kernel end and goes to the end of page dir ent 0
+         *lowerMemEnd = 0;
 uint32_t lowerBitmap[LENGTH_OF_LOWER_MAP] = {0};
 
 void viewMem(uint8_t *addr, uint32_t length) {
@@ -49,11 +48,22 @@ void viewMem(uint8_t *addr, uint32_t length) {
     sprintf("******************************\r\n");
 }
 
-void setMemStart(uint32_t * memStartAddr) {
+void setHigherMemStart(uint32_t * memStartAddr) {
     memStart = memStartAddr;
     // viewMem((uint32_t *)a-10000, 30000);
-    sprintf("Memstart addr = %ud -> last accessed %ud, bitmap %d\r\n", &memStart, lastAccessed, a);
+    sprintf("Memstart addr = %ud -> last accessed %ud, bitmap %d\r\n", &memStart, lastAccessed, bitmap);
     memset(bitmap, 0, LENGTH_OF_BITMAP);
+}
+
+void setLowerMem(uint32_t *start, uint32_t *end) {
+    uint32_t distPast = mod((uint32_t)start, PAGE_FRAME_SIZE); // how far past the boundry
+    uint32_t correctingDist = (PAGE_FRAME_SIZE-distPast);
+    // sprintf("Correcting Dist: %d -> %d - %d\r\n", correctingDist, PAGE_FRAME_SIZE, distPast);
+    lowerMemStart = (uint32_t *)((uint32_t)start + correctingDist);
+    lowerMemEnd = end;
+    sprintf("[LOWERMEM] %d past - %d start -- corrected to %d\r\n", distPast, start, lowerMemStart);
+    sprintf("Set lower Mem Bounds: 0x%x - 0x%x -- 0x%x bytes\r\n", lowerMemStart, lowerMemEnd, lowerMemEnd-lowerMemStart);
+    memset(lowerBitmap, 0, lowerMemEnd-lowerMemStart);
 }
 
 
@@ -116,8 +126,6 @@ uint32_t *findNextFreePage(uint8_t numPages, uint32_t *map, uint32_t length, uin
     for (uint32_t i = 0; i < length; i++){
         sprintf("%ud - %ub\r\n", map + i, map[i]);
 
-
-
         if ((map[i] & 0xFFFFFFFF) == 0xFFFFFFFF) {
             // all pages aready allocated so skip it
 
@@ -144,14 +152,15 @@ uint32_t *findNextFreePage(uint8_t numPages, uint32_t *map, uint32_t length, uin
                     lastAccessed = map + i;
                     int pageNum = (i * 4 * 8) + (bitPos); 
                     uint32_t *memStartLoc = start + (pageNum * PAGE_SIZE);
-                    sprintf("Allocating mem at location: %d - frame %d\r\n", memStartLoc, pageNum);
-                    memStartLoc = (uint32_t *)((uint32_t) memStartLoc & (~(0b111 << 9)));
-                    sprintf("Set avl bits to be 110\r\n");
-                    memStartLoc = (uint32_t *)(((uint32_t) memStartLoc) | (0b110 << 9));                                  
+                    // sprintf("Allocating is %d past the %d boundry\r\n", mod((uint32_t)memStartLoc, PAGE_FRAME_SIZE), PAGE_FRAME_SIZE);
+                    // sprintf("Allocating mem at location: %d - frame %d\r\n", memStartLoc, pageNum);
+                    // memStartLoc = (uint32_t *)((uint32_t) memStartLoc & (~(0b111 << avlBitPos)));
+                    // sprintf("Set avl bits to be 110\r\n");
+                    // memStartLoc = (uint32_t *)(((uint32_t) memStartLoc) | (0b110 << avlBitPos));                                  
 
 
                     // sprintf("After setting avl bits %d - avl bits %ub - %ub\r\n", memStartLoc, ((uint32_t) memStartLoc), ((uint32_t) memStartLoc >> 8));
-
+                    sprintf("\r\n");
                     return memStartLoc;
                 }
             }  
@@ -163,8 +172,8 @@ uint32_t *findNextFreePage(uint8_t numPages, uint32_t *map, uint32_t length, uin
 }
 
 uint32_t *findNextLowerFree(uint8_t numPages) {
-    uint32_t *addr =  findNextFreePage(numPages, lowerBitmap, LENGTH_OF_LOWER_MAP, lowerMemStart);
-    sprintf("Found lower addr: %d \r\n", addr);
+    uint32_t *addr =  findNextFreePage(numPages, lowerBitmap, lowerMemEnd-lowerMemStart, lowerMemStart);
+    sprintf("Found lower addr: %d \r\n", (uint32_t)addr);
     
     // viewMem(addr-1000, 1000);
     // sprintf("Starts here");

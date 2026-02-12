@@ -153,7 +153,8 @@ void install_default_isrs() {
 
 void isr_handler(struct InterruptRegisters *regs) {
     if (regs-> interuptNo <  32) {
-        kprintf("%d - %d\n", isr_routines[regs->interuptNo], regs->interuptNo);
+        if (regs->interuptNo != 14)
+            kprintf("%d - %d\n", isr_routines[regs->interuptNo], regs->interuptNo);
         if (isr_routines[regs->interuptNo] == 0) { // if no handler then use the default -> print error message and halt
             kprintf("Interrupt %d fired and is being handled by the fault handler\n", regs->interuptNo);
             // we have an error message for that interupt no
@@ -164,11 +165,15 @@ void isr_handler(struct InterruptRegisters *regs) {
             asm ( "hlt;\n\t" );
         }
         else {
-            kprintf("Running Custom Handler for %d\n", regs->interuptNo);
+            if (regs->interuptNo != 14)
+                kprintf("Running Custom Handler for %d\n", regs->interuptNo);
+            
             void (*handler)(struct InterruptRegisters *regs); // call the defined handler function for that error
             handler = isr_routines[regs->interuptNo];
+            
             handler(regs);
-            kprintf("Custom Handler for %d returned\r\n", regs->interuptNo);
+            if (regs->interuptNo != 14)
+                kprintf("Custom Handler for %d returned\r\n", regs->interuptNo);
         }
     }
 }

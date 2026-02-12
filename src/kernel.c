@@ -61,31 +61,34 @@ void kmain( void* mbd, unsigned int magic ) {
     contigousMemStruct freeMem = getLargestMemory(mbd, magic);
     sprintf("Free Mem Found %d - %d -> %d Kb\r\n", freeMem.start, freeMem.end, ((freeMem.length /(1024 * 4))/4));
     sprintf("Setting Mem Start to %ud - %d bytes after grub mem start\r\n", kernelEndAddr, kernelEndAddr-freeMem.start);
-    setMemStart(kernelEndAddr);
+    setHigherMemStart((uint32_t *)(4 * 1024 * 1024)); // start of the 2nd page table entry
+    setLowerMem(kernelEndAddr, (uint32_t *)(4 * 1024 * 1024 -1)); // end of the 1st page table entry (start of higher mem)
 
     
     sprintf("Kernel End: %d\r\n\n", kernelEndAddr);
 
-    installNewPageFull(0x1C000, 0x1C000);
-    installNewPageFull(0x1C000, 0x1C000);
-
     // installNewPageFull(0xFFFF0000,0xFFFF0000);
-    // uint32_t *addr = kmalloc(200);
-    // kprintf("Addr: %d\r\n", addr);
-    // *addr = 300;
-    // addr = kmalloc(500);
-    // *addr = 10;
-    // addr = kmalloc(600);
-    // *addr = 10;
-    // addr = kmalloc(1000);
-    // *addr = 10;
-    // addr = kmalloc(1050);
-    // *addr = 10;
-    // addr = kmalloc(2100);
-    // *addr = 10;
-    // addr = kmalloc(4000);
-    // *addr = 10;
+    // listPresentPages();
+    uint32_t *addr = kmalloc(200);
+    *addr = 300;
+    addr = kmalloc(500);
+    *addr = 20;
+    addr = kmalloc(600);
+    *addr = 30;
+    addr = kmalloc(1000);
+    *addr = 40;
+    addr = kmalloc(1050);
+    *addr = 50;
+    addr = kmalloc(2100);
+    *addr = 60;
+    addr = kmalloc(4000);
+    uint32_t val = *addr;
+    sprintf("Val: %d\r\n", val);
+    *addr = 10;
+    val = *addr;
+    sprintf("Val: %d\r\n", val);
     // addr = kmalloc(5000);
+    // listPresentPages();
     // uint32_t *addr = findNextHigherFree(1);
     // uint32_t *addr2 = findNextHigherFree(32);
     // uint32_t *addr3 = findNextHigherFree(5);
@@ -134,15 +137,7 @@ void kmain( void* mbd, unsigned int magic ) {
     //     *addr = 10;
     // }
    
-       
-    while (1) {
-
-        for (int i = 0; i < 100; i++) {
-            pauseTimeMs(100);
-            // kprintf("running on i: %d - %x\r\n", i, loc);
-        }
-    }
-
+    
     // uint32_t *pageAddr = getPage();
     // viewMem(pageAddr, 4 * 1024);
     // char *msg = "This is a test thing to try and put in a page and see if it works\0";
@@ -162,7 +157,7 @@ void kmain( void* mbd, unsigned int magic ) {
     // abort( );
     // echo();
     if (returnedCodes == 0) {
-        sprintf("Starting terminal\r\n");
+        sprintf("\r\n\r\nStarting terminal\r\n\r\n\n\r\n");
         initTerminal();
     } else {
         kprintf("Got status codes: %d from init functions\n", returnedCodes);

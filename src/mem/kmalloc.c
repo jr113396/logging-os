@@ -4,6 +4,8 @@
 #include "kmalloc.h"
 #include <maths.h>
 #include <stdio.h>
+#include <io/io.h>
+#include "timers/pit/pit.h"
 
 uint32_t *kmallocLocations[KMALLOC_SPLITS] = {0}; // an array of pointers to memory locations where smaller values (smaller than a page) are stored 
 uint32_t *kmallocMaps[KMALLOC_SPLITS] = {0};
@@ -63,6 +65,8 @@ uint32_t *findNextFreeSmallMap(uint16_t numBytes) {
 
 }
 void  *kmalloc(uint32_t numBytes) {
+    setAutoClearPages(0);
+
     if (numBytes == 0)
         return 0;
     uint32_t *addr = 0;
@@ -100,19 +104,36 @@ void  *kmalloc(uint32_t numBytes) {
 
     // now that we have an addr
     // install it into the page dir
-    page_table *newPT = (page_table *)findNextHigherFree(1);
+    page_table *PT;
+    page_directory pageDirectory = getPageDir();
+    uint32_t PD_Index = getPageDirIndex((uint32_t)addr);
+    uint32_t PT_Index = getPageTableIndex((uint32_t) addr);
+    if (pageDirectory.entries[PD_Index] & PDE_PRESENT) {
+        sprintf("[KMALLOC] Already had present page dir\r\n");
+        uint32_t *pageDirPhysVal = getPagesPhysAddr(pageDirectory.entries[PD_Index]);
+        sprintf("[KMALLOC] Page Dir Phys Val: %x\r\n", pageDirPhysVal);
+        PT = (page_table *) *pageDirPhysVal;
+        // if (pt.entries[])
+    }
+    else {
+        sprintf("[KMALLOC] No PT so making a new one \r\n");
+        page_table *PT = (page_table *)findNextLowerFree(1);
+        if (PT == 0) {
+            sprintf("[KMALLOC] Couldnt malloc page table\r\n");
+            // return 0 as error
+            return 0;
+        }
+        if (installPageDirEntry(PT,PD_Index) == 0) {
+            sprintf("[KMALLOC] Failed to install new page table\r\n");
+            return 0;
+        }
+        
+    }
 
-    if (newPT == 0) {
-        sprintf("[KMALLOC] Couldnt malloc page table\r\n");
-        // return 0 as error
-        return 0;
-    }
-    if (installPageDirEntry(newPT, getPageDirIndex((uint32_t)addr)) == 0) {
-        sprintf("[KMALLOC] Failed to install new page table\r\n");
-        return 0;
-    }
-    
+    sprintf("Trying to install page tab entry at %d %d\r\n", PD_Index, PT_Index);
     installPageTabEntry((uint32_t)addr, (uint32_t)addr);
+    
+    setAutoClearPages(1);
     sprintf("Installed new page tab at addr: %d\r\n", addr);
     return addr;
 }
@@ -121,3 +142,4 @@ uint32_t free(uint32_t *addr) {
     // printf 
     return returnHigherPage(addr);
 }
+

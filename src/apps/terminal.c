@@ -4,6 +4,7 @@
 #include "gameOfLife.h"
 #include "app.h"
 #include "tick-monitor.h"
+#include "mallocTest.h"
 
 #include <io/vga.h>
 #include <stdio.h>
@@ -13,8 +14,8 @@
 #include <timers/rtc/rtc.h>
 #include <timers/pit/pit.h>
 
-struct appStruct apps[6];
-uint8_t noCommands = 6;
+struct appStruct apps[7];
+uint8_t noCommands = 7;
 
 
 void rstTerminal() {
@@ -51,17 +52,20 @@ void setApp(struct appStruct apps[], uint8_t pos, char **appNames, uint8_t noNam
 void initTerminal() {
     char buffer[81];
     char *app1Names[] = {"echo"};
-    char *app2Names[] =  {"clear", "cls", "rst"};
+    char *app2Names[] = {"clear", "cls", "rst"};
     char *app3Names[] = {"help"};
     char *app4Names[] = {"game", "game of life"};
     char *app5Names[] = {"ticks"};
     char *app6Names[] = {"time"};
+    char *app7Names[] = {"malloc"};
     setApp(apps, 0, app1Names, 1, "Echo \t-> Enter the echo mode", &echoInit, 1);
     setApp(apps, 1, app2Names, 3,  "Clear \t-> Clears the screen and resets the cursor", &rstTerminal, 0);
     setApp(apps, 2, app3Names, 1, "Help \t-> print help for all apps", &helpTerminal, 0);
     setApp(apps, 3, app4Names, 2, "Game \t-> an implmentation of the game of life", &initGameOfLife, 1);
     setApp(apps, 4, app5Names, 1, "Ticks \t-> Displays the current number of ticks", &outNumTicks, 0);
     setApp(apps, 5, app6Names, 1, "Time \t -> Displays the current time", &printTime, 0);
+    setApp(apps, 6, app7Names, 1, "Malloc \t -> does malloc things for testing pagefaults", &mallocTest, 0);
+
     // char *commands[] = {"echo", "clear", "help", "game"};
     // void *cmdFuncs[] = {
     //     &echoInit,

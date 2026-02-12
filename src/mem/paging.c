@@ -45,8 +45,8 @@
     //                     │          │
     //                     └──────────┘
 
-page_directory pageDirectory;
-page_table pageTableOne;  
+page_directory pageDirectory;// __attribute__((aligned(PAGE_FRAME_SIZE)));
+page_table pageTableOne;// __attribute__((aligned(PAGE_FRAME_SIZE)));  
 
 int getPageDirIndex(uint32_t addr) {
     return addr >> 22; // get what page entry contains this addr 0-1023
@@ -63,6 +63,11 @@ uint32_t *getPagesPhysAddr(uint32_t val) {
 page_directory getPageDir() {
     return pageDirectory;
 } 
+
+void setDirEntPres(uint32_t dirIndex) {
+    sprintf("Enabling PDE %d\r\n", dirIndex);
+    pageDirectory.entries[dirIndex] |= PDE_PRESENT;
+}
 
 int doesDirEntryExist(uint32_t addr) {
     uint16_t index = getPageDirIndex(addr);
@@ -96,13 +101,39 @@ int installPageDirEntry(page_table *table, uint16_t pos) {
     // install a page directory entry at a position in the page dir entry
     sprintf("Pos: %d\r\n", pos);
     sprintf("Got table value: %ud\r\n", (table->entries));
-    #ifdef pagingLogging
-        pageDirectory.entries[pos] = ((uint32_t)(table->entries)) | PDE_USER | PDE_READ_WRITE | PDE_PRESENT;//(0b110 << 9); // set the corresponding avl bits but dont set it as present as we want page faults
+    #if 1
+        pageDirectory.entries[pos] = ((uint32_t)(table->entries)) | PDE_USER | PDE_READ_WRITE | PDE_PRESENT | (0b110 << avlBitPos); // set the corresponding avl bits but dont set it as present as we want page faults
         // sprintf("Installed page dir entry with avl bits 0b110\r\n");
     #else
         pageDirectory.entries[pos] = ((uint32_t)(table->entries)) | PDE_USER | PDE_READ_WRITE | PDE_PRESENT;
     #endif
     return 1;
+}
+
+void listPresentPages() {
+    sprintf("*****   LISTING PRESENT PAGES ****\r\n");
+    for (int PDE_NUM = 0; PDE_NUM < NUM_PAGES; PDE_NUM++) {
+        if (pageDirectory.entries[PDE_NUM] & PDE_PRESENT) {
+            sprintf("PDE: %d -> PRESENT\r\n", PDE_NUM);
+            sprintf("PDE Phys Addr: %x\r\n", pageDirectory.entries[PDE_NUM]);
+            
+            uint32_t pageDirEntryVal = pageDirectory.entries[PDE_NUM];
+            uint32_t *pageDirPhysVal = getPagesPhysAddr(pageDirEntryVal);
+            page_table *pt = (page_table *) *pageDirPhysVal;
+            char lastWasPres = 0;
+            uint16_t lastTimePres = 0;
+            for (int PTE_NUM = 0; PTE_NUM < NUM_PAGES; PTE_NUM++) {
+                char isPTEPres = pt->entries[PTE_NUM] & PTE_NUM;
+                if (!lastWasPres && isPTEPres) 
+                    lastTimePres = PTE_NUM;
+                sprintf("PTE_NUM: %d - %d\r\n",&pt->entries[PTE_NUM], PTE_NUM);
+                if (lastWasPres & !isPTEPres) {
+                    sprintf("\tPTE %d to %d pres\r\n", lastTimePres, PTE_NUM-1);
+                }
+                lastWasPres = isPTEPres;
+            }
+        }
+    }
 }
 
 void installPageTabEntry(uint32_t virtAddr, uint32_t physAddr) {
@@ -111,15 +142,19 @@ void installPageTabEntry(uint32_t virtAddr, uint32_t physAddr) {
     uint16_t dirPos = getPageDirIndex(virtAddr),
              tabPos = getPageTableIndex(virtAddr);
 
+    uint32_t flags = physAddr | PTE_USER | PTE_READ_WRITE | PTE_PRESENT | (0b110 << avlBitPos);
+    sprintf("[INSTALL PAGE TAB ENTRY]\r\n");
+    sprintf("Dir Pos: %d\r\n", dirPos);
+    sprintf("Tab Pos: %d\r\n", tabPos);
     sprintf("Page Dir Entry Val: %d - addr %d\r\n", pageDirectory.entries[dirPos], getPagesPhysAddr(pageDirectory.entries[dirPos]));
-    uint32_t *dirEntry = (uint32_t *)getPagesPhysAddr(pageDirectory.entries[dirPos]);
+    page_table *pt = (page_table *)getPagesPhysAddr(pageDirectory.entries[dirPos]);
     
-    sprintf("Read table at addr %d\r\n", dirEntry);
+    sprintf("Read table at addr %d\r\n", pt);
 
-    sprintf("Current Value of dirEntry at pos: %ud\r\n", dirEntry[tabPos]);
-    dirEntry[tabPos] = physAddr | PTE_USER | PTE_READ_WRITE | PTE_PRESENT;
-    sprintf("New Value of dirEntry at pos: %ud\r\n", dirEntry[tabPos]);
-    sprintf("Set Tab Entry to %ud - %ub\r\n", physAddr | PTE_USER | PTE_READ_WRITE | PTE_PRESENT, physAddr | PTE_USER | PTE_READ_WRITE | PTE_PRESENT);
+    sprintf("Current Value of pt at pos: %ud\r\n", pt->entries[tabPos]);
+    pt->entries[tabPos] = flags;
+    sprintf("New Value of pt at pos: %ud\r\n", pt->entries[tabPos]);
+    sprintf("Set Tab Entry to %ud - %b\r\n", flags, flags);
 }
 
 
@@ -136,15 +171,17 @@ void disablePages() {
     // disable all pages that arent to do with the kernel so ones from kmalloc
     for (int i = 1; i < NUM_PAGES; i++) {
        if (pageDirectory.entries[i] & (PDE_PRESENT)) {
-        
-            //sprintf("Page dir %d was present - changing\r\n", i);
+            sprintf("****************8\r\n");
+            sprintf("Page dir %d was present - changing\r\n", i);
             pageDirectory.entries[i] &= ~(PDE_PRESENT); // clear the present bit
             // and then add that it has been modified by this function by setting the avl bits to 110
             pageDirectory.entries[i] &= ~(0b111 << avlBitPos); // clear the avl bits
             pageDirectory.entries[i] |= (0b110 << avlBitPos); // and set them to the correct values
-            
+            sprintf("Page dir %d now has pres val %d\r\n", i, pageDirectory.entries[i] & (PDE_PRESENT)); 
         }
     }
+    loadPageDirectory(pageDirectory.entries);
+
 }
 
 void installNewPageFull(uint32_t addr, uint32_t physAddr) {
@@ -234,7 +271,7 @@ void initPaging() {
         // set to present and r/w and at supervisor level
         pageTableOne.entries[i] = (i * 0x1000) | PTE_USER | PTE_READ_WRITE | PTE_PRESENT; // | PAGING_SUPERVISOR | PAGING_WRITE | PAGING_PRESENT;
         //                  ^
-    // Mapping the addr [i]Kb to page [i] so 20-21kb is in page 20
+        // Mapping the addr [i]Kb to page [i] so 20-21kb is in page 20
         // so this maps from addr 0 - 1024Kb - 1MB
     
     
@@ -242,6 +279,8 @@ void initPaging() {
 
     // put page table into page directory
     pageDirectory.entries[0] = ((unsigned int)pageTableOne.entries) | 3;// | PAGING_SUPERVISOR | PAGING_WRITE | PAGING_PRESENT;
+
+    sprintf("[PAGINGINIT] PD %d - PT1 %d\r\n", pageDirectory, pageTableOne);
 
     install_isr_handler (14, &pageFaultHandler); 
     install_isr_handler (6, &invalidOpcodeHandler);

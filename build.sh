@@ -85,6 +85,8 @@ ${CC} ${CFLAGS} -o ${OBJ}/apps-terminal.o -c ${SRC}/apps/terminal.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-game-of-life.o -c ${SRC}/apps/gameOfLife.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-plotter.o -c ${SRC}/apps/plotter.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-tick-monitor.o -c ${SRC}/apps/tick-monitor.c
+${CC} ${CFLAGS} -o ${OBJ}/apps-malloc-test.o -c ${SRC}/apps/mallocTest.c
+
 
 ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/boot.o \
@@ -108,6 +110,7 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/apps-echo.o \
 	${OBJ}/apps-terminal.o \
 	${OBJ}/apps-game-of-life.o \
+	${OBJ}/apps-malloc-test.o \
 	${OBJ}/stdio.o \
     ${OBJ}/serial-driver.o \
 	${OBJ}/paging.o \

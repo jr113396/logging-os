@@ -17,6 +17,8 @@
 
 #define pitFreq 1193180
 
+void setAutoClearPages(uint8_t val);
+
 void pitHandler(struct InterruptRegisters *regs);
 
 void initPit();
