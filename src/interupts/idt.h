@@ -85,4 +85,6 @@ extern void irq15();
 extern void isr128(); // for system calls
 extern void isr177();
 
+
+void displayRegisters(struct InterruptRegisters *regs);
 #endif

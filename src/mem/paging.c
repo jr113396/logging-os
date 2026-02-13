@@ -65,7 +65,7 @@ page_directory getPageDir() {
 } 
 
 void setDirEntPres(uint32_t dirIndex) {
-    sprintf("Enabling PDE %d\r\n", dirIndex);
+    // sprintf("Enabling PDE %d\r\n", dirIndex);
     pageDirectory.entries[dirIndex] |= PDE_PRESENT;
 }
 
@@ -171,13 +171,13 @@ void disablePages() {
     // disable all pages that arent to do with the kernel so ones from kmalloc
     for (int i = 1; i < NUM_PAGES; i++) {
        if (pageDirectory.entries[i] & (PDE_PRESENT)) {
-            sprintf("****************8\r\n");
-            sprintf("Page dir %d was present - changing\r\n", i);
+            // sprintf("****************8\r\n");
+            // sprintf("Page dir %d was present - changing\r\n", i);
             pageDirectory.entries[i] &= ~(PDE_PRESENT); // clear the present bit
             // and then add that it has been modified by this function by setting the avl bits to 110
             pageDirectory.entries[i] &= ~(0b111 << avlBitPos); // clear the avl bits
             pageDirectory.entries[i] |= (0b110 << avlBitPos); // and set them to the correct values
-            sprintf("Page dir %d now has pres val %d\r\n", i, pageDirectory.entries[i] & (PDE_PRESENT)); 
+            // sprintf("Page dir %d now has pres val %d\r\n", i, pageDirectory.entries[i] & (PDE_PRESENT)); 
         }
     }
     loadPageDirectory(pageDirectory.entries);
@@ -284,6 +284,7 @@ void initPaging() {
 
     install_isr_handler (14, &pageFaultHandler); 
     install_isr_handler (6, &invalidOpcodeHandler);
+    install_isr_handler (3, &breakpointHandler);
 
     loadPageDirectory(pageDirectory.entries);
     enablePaging();

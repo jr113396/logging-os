@@ -81,6 +81,7 @@ int kfprintf(void (*outChar)(char), char *fmt, va_list ap) {
 
     while (*fmt) {
         char chr = *fmt;
+        #pragma GCC diagnostic ignored "-Wunused-value"
         *fmt++;
         if (chr == '%') {              /* control */
             if (prev) {

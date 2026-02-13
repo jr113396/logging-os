@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#pragma GCC diagnostic ignored "-Wunused-variable"
 static uint16_t PORT_MAPPING[] = {0x3F8, 0x2F8, 0x3E8, 0x2E8, 0x5F8, 0x4F8, 0x5E8, 0x4E8};
 
 int initSerial(int serialNum); 

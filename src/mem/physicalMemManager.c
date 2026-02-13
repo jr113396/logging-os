@@ -35,7 +35,7 @@ void viewMem(uint8_t *addr, uint32_t length) {
                 sprintf("\\n");
                 break;
             default:
-                sprintf("%c",addr[i]);
+                sprintf("%x",addr[i]);
         }
     }
     sprintf("\r\n");
@@ -85,7 +85,7 @@ uint32_t returnPage(uint32_t *addr, uint32_t *map, uint32_t length, uint32_t *st
     uint8_t avlBits = ((uint32_t) addr >> 8) & (0b111);
     sprintf("Got avlBits %ub \r\n", avlBits);
     
-    uint32_t mapVal = bitmap[mapIndex] & (1 << bitPos);
+    uint32_t mapVal = map[mapIndex] & (1 << bitPos);
     sprintf("Looked in index: %d at pos %d and found val %d\r\n", mapIndex, bitPos, mapVal);
     if (mapVal == 0) {
         sprintf("[return page] Map val found == 0? maybe double freed\r\n");
@@ -93,7 +93,7 @@ uint32_t returnPage(uint32_t *addr, uint32_t *map, uint32_t length, uint32_t *st
     }
     else {
         // set the bit back to 0 as now free
-        bitmap[mapIndex] ^= (1 << bitPos);
+        map[mapIndex] ^= (1 << bitPos);
     }
 
 

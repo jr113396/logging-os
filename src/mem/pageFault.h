@@ -7,12 +7,13 @@
 
 #include "interupts/idt.h"
 #include "interupts/interuptRegs.h"
-
+#include <logging/logging.h>
 
 // logging
 uint8_t isThereNewData();
 uint32_t readLastAddr();
 uint32_t getOldData();
+logging_data *createLoggingEvent();
 
 // error debugging
 void pageDirFlagsBits(uint32_t dir);
@@ -23,4 +24,5 @@ void pageFaultErrorBits(uint32_t error);
 void pageFaultError(struct InterruptRegisters *regs);
 void pageFaultHandler(struct InterruptRegisters *regs);
 void loggingPagingHandler(struct InterruptRegisters *regs);
+void breakpointHandler(struct InterruptRegisters *regs);
 #endif

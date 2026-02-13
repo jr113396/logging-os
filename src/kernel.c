@@ -66,18 +66,22 @@ void kmain( void* mbd, unsigned int magic ) {
 
     
     sprintf("Kernel End: %d\r\n\n", kernelEndAddr);
-
+    // varWrite();
     // installNewPageFull(0xFFFF0000,0xFFFF0000);
     // listPresentPages();
     uint32_t *addr = kmalloc(200);
     *addr = 300;
+    sprintf("addr: %x\r\n", addr);
     addr = kmalloc(500);
     *addr = 20;
     addr = kmalloc(600);
+
     *addr = 30;
     addr = kmalloc(1000);
+
     *addr = 40;
     addr = kmalloc(1050);
+
     *addr = 50;
     addr = kmalloc(2100);
     *addr = 60;

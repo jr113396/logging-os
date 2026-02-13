@@ -89,6 +89,7 @@ void printTime() {
     kprintf("\r\n%2d:%2d:%2d - %s %s %2d 20%2d\r\n", time.hours, time.minutes, time.seconds, day[time.weekday], month[time.month], time.day, time.year);
 }
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void rtcHandler(struct InterruptRegisters *regs) {
     outb(0x70, 0x0c); // read to clear the interupts
     inb(0x71); // dont save the contents

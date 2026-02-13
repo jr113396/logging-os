@@ -104,6 +104,7 @@ void  *kmalloc(uint32_t numBytes) {
 
     // now that we have an addr
     // install it into the page dir
+    #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
     page_table *PT;
     page_directory pageDirectory = getPageDir();
     uint32_t PD_Index = getPageDirIndex((uint32_t)addr);

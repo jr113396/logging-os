@@ -5,7 +5,11 @@
 #include <stdint.h>
 #include <io/io.h>
 #include <mem/paging.h>
+#include <mem/pageFault.h>
 #include <stdio.h>
+#include <logging/logging.h>
+#include <mem/kmalloc.h>
+
 uint64_t ticksHandled = 0;
 uint8_t secForTicks = 10;
 
@@ -20,9 +24,12 @@ void pitHandler(struct InterruptRegisters *regs) {
     // kprintf("Pit Handler no %d\n", ticksHandled++);
     ticksHandled++;
     if (isThereNewData()) {// is there new page data?
+        logging_data *log = createLoggingEvent();
+        free((uint32_t *)log);
+        // insertLog(log);
 
-        sprintf("Got new values\r\n");
-        readLastAddr(); // if so read it and sprintf it
+        // // sprintf("Got new values\r\n");
+        // readLastAddr(); // if so read it and sprintf it
     }
     if (autoClearPages) {
         disablePages(); // turn off the pages

@@ -10,4 +10,5 @@ void setHigherMemStart(uint32_t * memStartAddr);
 void setLowerMem(uint32_t *start, uint32_t *end);
 uint32_t returnHigherPage(uint32_t *addr);
 
+void viewMem(uint8_t *addr, uint32_t length);
 #endif

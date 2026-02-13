@@ -2,11 +2,22 @@
 #include <stdio.h>
 #include "paging.h"
 #include "timers/pit/pit.h"
+#include "kmalloc.h"
+#include <stdlib.h>
+#include "interupts/idt.h"
+
+#include "mem/physicalMemManager.h"
 
 static uint32_t *lastAddr = 0; // the last addr that was written to, captured by the page table 
 static uint32_t oldData = 0; // the data that was stored in the addr before being changed 
 static uint8_t newData = 0; // was there new data to read from the last addr or has it been read already ? 1 for yes, 0 for no
-static uint8_t count = 0;
+static uint32_t count = 0;
+static logType prevType;
+
+static uint8_t inFault = 0;
+
+static uint8_t nextInst = 0;
+static uint8_t *nextInstLoc = 0; 
 
 // with help from https://www.youtube.com/watch?v=QIGun_BGuDw
 
@@ -24,13 +35,33 @@ uint8_t isThereNewData() {
 // reads and returns the last addr and then sets the newData flag to 0 as it has now been read
 uint32_t readLastAddr() {
     uint32_t data = *(uint32_t *)lastAddr;
-    kprintf("[LOGGING] Addr %x changed from %ud to %ud\r\n", lastAddr, oldData, data);
+
+    if (prevType == WRITE)
+        kprintf("[LOGGING] Addr %x changed from %ud to %ud\r\n", lastAddr, oldData, data);
+    if (prevType == READ)
+        kprintf("[LOGGING] Addr %x read - had value %ud\r\n", lastAddr, oldData);
     newData = 0; // set new data to 0 as we have just read the new data;
     return data;
 }
+logging_data *createLoggingEvent() {
+    uint32_t currentData = *(uint32_t *)lastAddr;
 
+    logging_data *data = kmalloc(sizeof(logging_data));
+    data->addr = (uint32_t)lastAddr;
+    data->before = oldData;
+    data->after = currentData;
+    data->numTicks = getTickCount();
+    data->type = prevType;
+    data->next = NULL;
+    newData = 0;
+    return data;
+}
 uint32_t getOldData() {
     return oldData;
+}
+
+logType getLogType() {
+    return prevType;
 }
 
 //*************************
@@ -212,17 +243,17 @@ void pageFaultError(struct InterruptRegisters *regs) {
 
 // this function is called when the page fault is caused by the logging system not an actual page fault otherwise the pageFaultError function is called
 void loggingPagingHandler(struct InterruptRegisters *regs) {
-    sprintf("Dealing with page table logging\r\n"); 
+    // sprintf("Dealing with page table logging\r\n"); 
     page_directory pageDirectory = getPageDir();
     uint32_t addr = regs->cr2;
     uint32_t pageDirIndex = getPageDirIndex(addr);
-    pageFaultErrorBits(regs->errorCode);
-    sprintf("setting page dir ent to present - was %d\r\n", pageDirectory.entries[pageDirIndex] & PDE_PRESENT);
+    // pageFaultErrorBits(regs->errorCode);
+    // sprintf("setting page dir ent to present - was %d\r\n", pageDirectory.entries[pageDirIndex] & PDE_PRESENT);
     // pageDirectory.entries[pageDirIndex] |= PDE_PRESENT; // enable the page dir
 
     setDirEntPres(pageDirIndex);
 
-    sprintf("Dir is now %d\r\n", pageDirectory.entries[pageDirIndex] & PDE_PRESENT);
+    // sprintf("Dir is now %d\r\n", pageDirectory.entries[pageDirIndex] & PDE_PRESENT);
 
     uint32_t *pageDirPhysVal = getPagesPhysAddr(pageDirectory.entries[pageDirIndex]);
     page_table *pageTable = (page_table *)pageDirPhysVal; // get the page table from the page dir
@@ -237,73 +268,79 @@ void loggingPagingHandler(struct InterruptRegisters *regs) {
         asm("hlt"::);
     }
 
-    sprintf("PTE: %x - %x\r\n", getPagesPhysAddr(pageTable->entries[pageTableIndex]), pageTable->entries[pageTableIndex]);
-    sprintf("Got page table index: %d at page table %x\r\n", pageTableIndex, pageTable);
-    sprintf("B - %b\r\n", pageDirectory.entries[pageDirIndex] & PDE_PRESENT);
-    sprintf("C - %d\r\n", pageTable->entries[pageTableIndex] & PTE_PRESENT);
-    sprintf("Setting page table to present - was %d\r\n", pageTable->entries[pageTableIndex] & PTE_PRESENT);
+    // sprintf("Setting page table to present - was %d\r\n", pageTable->entries[pageTableIndex] & PTE_PRESENT);
     pageTable->entries[pageTableIndex] |= PTE_PRESENT; // enable the page table
-    // sprintf("A\r\n");
-    
 
-    // sprintf("a\r\n");
     // has the data been read since the last go round?
-    // if (isThereNewData()) {
-    //     // no
-    //     // so read it
-    //     sprintf("b\r\n");
-    //     readLastAddr();
-    // }
-    // sprintf("c\r\n");
+    if (isThereNewData()) {
+        // no
+        // so read it
+        readLastAddr();
+    }
+    if (inFault <= 1) {
+        // set the addr that is attempted to be written to
+        lastAddr = (uint32_t *)regs->cr2;
     
-    // set the addr that is attempted to be written to
-    lastAddr = (uint32_t *)regs->cr2;
-    // sprintf("last Addr: %x\r\n", lastAddr);
-    // set old data to be the data that was there before
-    oldData = *lastAddr;
-    // sprintf("f\r\n");
+        // set old data to be the data that was there before
+        oldData = *lastAddr;
+    
+        // and set the flag that there is new data
+        newData = 1;
+    
+        if ((regs->errorCode & (1 << 1)) != 0)
+            // sprintf("Write Access\r\n");
+            prevType = WRITE;
+        else
+            // sprintf("Read Access\r\n");
+            prevType = READ;
 
-    // and set the flag that there is new data
-    newData = 1;
-    // sprintf("d\r\n");
+    }
+    nextInstLoc = (uint8_t *)regs->eip;
+    uint8_t nextInst = *nextInstLoc;
+    viewMem(nextInstLoc-3, 6);
+
+    *nextInstLoc = 0xCC; // debugger call to int 3 https://c9x.me/x86/html/file_module_x86_id_142.html
+    kprintf("EIP1: %d - %x\r\n", nextInstLoc, nextInst);
+    viewMem(nextInstLoc-3, 6);
     // asm("hlt"::);
     count++;
 }
 
+void breakpointHandler(struct InterruptRegisters *regs) {
+    kprintf("Break point handler running\r\n");
+    displayRegisters(regs);
+    uint8_t newEIP = *((uint8_t *)regs->eip);
+    sprintf("NewEIP: %x\r\n", newEIP);
+    sprintf("NextLoc: %x - EIP: %x - %x\r\n", nextInstLoc, regs->eip, *(uint8_t *)regs->eip);
+
+    *((uint8_t*)regs->eip) = nextInst;
+    viewMem(nextInstLoc-3, 6);
+
+    // asm("hlt;": :);
+}
+
 void pageFaultHandler(struct InterruptRegisters *regs) {
     setAutoClearPages(0);
+    inFault++;
     
-    sprintf("\r\n");
-    sprintf("******************************\r\n");
-    sprintf("*                            *\r\n");
-    sprintf("*    Page Fault Handler      *\r\n");
-    sprintf("*                            *\r\n");
-    sprintf("******************************\r\n");
+    // sprintf("\r\n");
+    // sprintf("******************************\r\n");
+    // sprintf("*                            *\r\n");
+    // sprintf("*    Page Fault Handler      *\r\n");
+    // sprintf("*                            *\r\n");
+    // sprintf("******************************\r\n");
     
-    sprintf("Disabling autoclear pages\r\n");
+    // sprintf("Disabling autoclear pages\r\n");
     uint32_t addr = regs->cr2;
     page_directory pageDirectory = getPageDir();
-    sprintf("PageDirOut: %d\r\n\n\n\n", pageDirectory);
 
-    sprintf("Paging\r\n");
-    sprintf("Addr: %d, %x\r\n", addr, addr);
-    sprintf("Page Dir Index: %d, Page Table Index: %d\r\n", getPageDirIndex(addr), getPageTableIndex(addr));
+    // sprintf("Addr: %d, %x\r\n", addr, addr);
+    // sprintf("Page Dir Index: %d, Page Table Index: %d\r\n", getPageDirIndex(addr), getPageTableIndex(addr));
     
     // addr - the addr being written to
 
-    sprintf("Does Entry Exist Val: %d\r\n", doesDirEntryExist(addr));
-
     uint32_t pageDirIndex = getPageDirIndex(addr),
              pageTabIndex = getPageTableIndex(addr);
-
-    // // does the directory exist?
-    // if (doesDirEntryExist(addr)) {
-    //     // yes
-    //     // then some other error happened
-    //     pageFaultErrorBits(regs->errorCode);
-    //     pageFaultError(regs);
-    //     // so fault and error - this is an actual page fault
-    // }
 
     
     // at this point the dir is not present
@@ -311,24 +348,23 @@ void pageFaultHandler(struct InterruptRegisters *regs) {
     
     // get the avl bits of the page dir to see if it is disabled or not
     uint8_t avlBits = ((pageDirectory.entries[pageDirIndex] >> avlBitPos) & 0b111);
-    sprintf("AvlBits for tab %d: %b - %d\r\n", pageDirIndex, avlBits, avlBits);
+    // sprintf("AvlBits for tab %d: %b - %d\r\n", pageDirIndex, avlBits, avlBits);
 
     // #ifdef pagingLogging
-    sprintf("%b - %b \r\n", (avlBits == 0b110), pageDirectory.entries[pageDirIndex]) ;
+    // sprintf("%b - %b \r\n", (avlBits == 0b110), pageDirectory.entries[pageDirIndex]) ;
     if ((avlBits & 0b111) == 0b110) {
-        sprintf("running logging handler\r\n");
+        // sprintf("running logging handler\r\n");
         // this page fault was caused by the logging system rather than 
         // by an actual page fault
         loggingPagingHandler(regs);
-        sprintf("Dir is now %d\r\n", pageDirectory.entries[pageDirIndex] & PDE_PRESENT);
+        // sprintf("Dir is now %d\r\n", pageDirectory.entries[pageDirIndex] & PDE_PRESENT);
 
        
     } else {
     // #endif
         // this page fault was actually caused by a page fault rather than by 
         // Make page table
-        // #ifdef autofillpagetable
-        #if 0
+        #ifdef autofillpagetable
             page_table *newPageTable = (page_table *)getNewPageTable();
             if (newPageTable == 0) {
                 sprintf("No more page tables to hand out\r\n");
@@ -395,12 +431,13 @@ void pageFaultHandler(struct InterruptRegisters *regs) {
     // kprintf("eip Val:\t%d\t \t%ud \t%ud\r\n", (regs->eip),     *(uint32_t *)(regs->eip),     (*(uint32_t **)(regs->eip)));
     //oldData = *(uint32_t *)(regs->eip);
     // *(uint32_t *)(regs->eip) = 0;// 0x0F0E;
-    sprintf("Enabling autoclear pages\r\n");
+    // sprintf("Enabling autoclear pages\r\n");
 
     // if (count < 10) 
-        setAutoClearPages(1);
+    inFault--;
+    // setAutoClearPages(1);
 
-    if (count > 100000) {
+    if (count > 10000) {
         kprintf("Max PageFaults - Halting\r\n");
         asm("hlt;"::);
     }

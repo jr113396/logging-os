@@ -42,6 +42,10 @@ ${CC} ${CFLAGS} -o ${OBJ}/maths.o			-c ${SRC}/maths.c
 ${CC} ${CFLAGS} -o ${OBJ}/random.o			-c ${SRC}/random.c
 ${CC} ${CFLAGS} -o ${OBJ}/protected.o    	-c ${SRC}/protected.c
 
+#			Logging
+${CC} ${CFLAGS} -o ${OBJ}/logging.o    	-c ${SRC}/logging/logging.c
+
+
 # 			IO
 ${CC} ${CFLAGS} -o ${OBJ}/kprintf.o   		-c ${SRC}/io/kprintf.c
 ${CC} ${CFLAGS} -o ${OBJ}/io.o        		-c ${SRC}/io/io.c
@@ -124,7 +128,8 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/random.o \
 	${OBJ}/physicalMemMan.o \
 	${OBJ}/kmalloc.o \
-    ${OBJ}/apps-tick-monitor.o
+    ${OBJ}/apps-tick-monitor.o \
+	${OBJ}/logging.o
 
 
 
