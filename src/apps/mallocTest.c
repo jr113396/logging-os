@@ -21,21 +21,28 @@ void loop(volatile uint32_t *start, uint32_t count) {
 
 
 void mallocTest() {
+    kprintf("\r\nRunning mallocTest\r\n");
     char *addr = kmalloc(1);
     // volatile char *otherAddr = kmalloc(1);
 
-    kprintf("   got addr 0x%x", addr);
+    kprintf("   got addr 0x%x\r\n", addr);
+    kprintf("STRCMP: %d\r\n", strcmp("abc", "abc"));
     // listPresentPages();
     do {
         kprintf("\r\n->");
         memset(addr, 0, 1024);
-        getStr(addr, 1024 * 4, 1);
+        getStr(addr, 1024, 1);
         sprintf("You Wrote: %s\r\n", addr);
+        sprintf("\r\n***\r\n\r\n");
+        sprintf("STRLEN: %d\r\n", strlen(addr));
 
-        if (strcmp(addr, "count") == 0) {
-            loop((uint32_t *)addr, 1000);
-        }
-    } while (strcmp(addr, "exit"));
+        // if (strcmp(addr, "count") == 0) {
+        //     loop((uint32_t *)addr, 1000);
+        // }
+        sprintf("\r\n****\r\n\r\n");
+
+        sprintf("Running into the while\r\n");
+    } while (sprintf("Inwhile %s\r\n", addr),strcmp(addr, "exit"), sprintf("End of while\r\n"), 1);
     kprintf("\r\n");
     // free((uint32_t *)addr);
 }

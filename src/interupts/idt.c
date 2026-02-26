@@ -110,7 +110,7 @@ void eflagsTranslate(uint32_t eflags) {
 }
 
 void displayRegisters(struct InterruptRegisters *regs) {
-     kprintf("cr2 %d, ds: %d, edi: %d, esi: %d, ebp: %d, esp: %d, ebx: %d, esp: %d, ecx: %d, eax: %d\n",
+     sprintf("cr2 %d, ds: %d, edi: %d, esi: %d, ebp: %d, esp: %d, ebx: %d, esp: %d, ecx: %d, eax: %d\n",
         regs->cr2,
         regs->ds,
         regs->edi,
@@ -123,6 +123,29 @@ void displayRegisters(struct InterruptRegisters *regs) {
         regs->eax
     );
 
+    kprintf("cr2 %d, ds: %d, edi: %d, esi: %d, ebp: %d, esp: %d, ebx: %d, esp: %d, ecx: %d, eax: %d\n",
+        regs->cr2,
+        regs->ds,
+        regs->edi,
+        regs->esi,
+        regs->ebp,
+        regs->esp,
+        regs->ebx,
+        regs->edx,
+        regs->ecx,
+        regs->eax
+    );
+
+    sprintf("I#: %d, ECode: %d\n eip: %d, csm: %d, eflags: %d, use resp: %d, ss: %d \n",
+        regs->interuptNo,
+        regs->errorCode,
+        regs->eip,
+        regs->csm,
+        regs->eflags,
+        regs->useresp,
+        regs->ss
+    );
+    
     kprintf("I#: %d, ECode: %d\n eip: %d, csm: %d, eflags: %d, use resp: %d, ss: %d \n",
         regs->interuptNo,
         regs->errorCode,
@@ -132,9 +155,13 @@ void displayRegisters(struct InterruptRegisters *regs) {
         regs->useresp,
         regs->ss
     );
+    
+    
     eflagsTranslate(regs->eflags);
     uint32_t *eip_broken = (uint32_t *)(regs->eip);
+    sprintf("EIP: %x, %ux\n", eip_broken, *eip_broken);
     kprintf("EIP: %x, %ux\n", eip_broken, *eip_broken);
+
 }
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -152,9 +179,11 @@ void install_default_isrs() {
 }
 
 void isr_handler(struct InterruptRegisters *regs) {
-    if (regs-> interuptNo <  32) {
-        if (regs->interuptNo != 14)
+    sprintf("Calling ISR: %d\r\n", regs->interuptNo);
+    if (regs->interuptNo <  32) {
+        if (regs->interuptNo != 14 && regs->interuptNo != 3)
             kprintf("%d - %d\n", isr_routines[regs->interuptNo], regs->interuptNo);
+
         if (isr_routines[regs->interuptNo] == 0) { // if no handler then use the default -> print error message and halt
             kprintf("Interrupt %d fired and is being handled by the fault handler\n", regs->interuptNo);
             // we have an error message for that interupt no
@@ -165,14 +194,14 @@ void isr_handler(struct InterruptRegisters *regs) {
             asm ( "hlt;\n\t" );
         }
         else {
-            if (regs->interuptNo != 14)
+            if (regs->interuptNo != 14 && regs->interuptNo != 3)
                 kprintf("Running Custom Handler for %d\n", regs->interuptNo);
             
             void (*handler)(struct InterruptRegisters *regs); // call the defined handler function for that error
             handler = isr_routines[regs->interuptNo];
             
             handler(regs);
-            if (regs->interuptNo != 14)
+            if (regs->interuptNo != 14 && regs->interuptNo != 3)
                 kprintf("Custom Handler for %d returned\r\n", regs->interuptNo);
         }
     }
@@ -190,6 +219,10 @@ void setIDTGate(uint8_t num, uint32_t offset, uint16_t segment, uint8_t flags) {
 
 
 void irq_handler(struct InterruptRegisters *regs) {
+    uint16_t irqNum = regs->interuptNo-32;
+    if (irqNum != 0 && irqNum != 8 && irqNum != 1) // the timers and keyboard
+        sprintf("Calling IRQ: %d\r\n", regs->interuptNo-32);
+
     void (*handler)(struct InterruptRegisters *regs);
     handler = irq_routines[regs->interuptNo -32];
     if (handler) {

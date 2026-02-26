@@ -18,6 +18,7 @@ typedef struct logging_data {
 } logging_data;
 
 void insertLog(logging_data *data);
+void readLog(logging_data * data);
 void readLogs();
 void clearLogs();
 void countLogs();

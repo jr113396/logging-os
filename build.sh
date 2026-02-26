@@ -24,7 +24,7 @@ AS=i686-elf-as
 CC=i686-elf-gcc
 LD=i686-elf-ld
 
-CFLAGS="-Wall -Wextra -fno-builtin -I src/ -nostdlib -nodefaultlibs" #-Werror 
+CFLAGS="-Wall -Wextra -fno-builtin -I src/ -nostdlib -nodefaultlibs -o0 -g" #-Werror 
 LDFLAGS="-nostdlib " #-nostartfiles -nodefaultlibs
 
 ${AS} -o ${OBJ}/boot.o   			${SRC}/boot.s
@@ -69,6 +69,7 @@ ${CC} ${CFLAGS} -o ${OBJ}/pageFault.o   	-c ${SRC}/mem/pageFault.c
 ${CC} ${CFLAGS} -o ${OBJ}/invalidOpcodeFault.o -c ${SRC}/mem/invalidOpcodeFault.c
 ${CC} ${CFLAGS} -o ${OBJ}/physicalMemMan.o  -c ${SRC}/mem/physicalMemManager.c
 ${CC} ${CFLAGS} -o ${OBJ}/kmalloc.o			-c ${SRC}/mem/kmalloc.c
+${CC} ${CFLAGS} -o ${OBJ}/decodeAssembly.o	-c ${SRC}/mem/decodeAssembly.c
 
 #			TIMERS
 ${CC} ${CFLAGS} -o ${OBJ}/timers-pit.o 		-c ${SRC}/timers/pit/pit.c
@@ -90,6 +91,7 @@ ${CC} ${CFLAGS} -o ${OBJ}/apps-game-of-life.o -c ${SRC}/apps/gameOfLife.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-plotter.o -c ${SRC}/apps/plotter.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-tick-monitor.o -c ${SRC}/apps/tick-monitor.c
 ${CC} ${CFLAGS} -o ${OBJ}/apps-malloc-test.o -c ${SRC}/apps/mallocTest.c
+${CC} ${CFLAGS} -o ${OBJ}/apps-sort.o -c ${SRC}/apps/sort.c
 
 
 ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
@@ -129,7 +131,9 @@ ${LD} ${LDFLAGS} -T ${SRC}/linker.ld -o kernel.bin \
 	${OBJ}/physicalMemMan.o \
 	${OBJ}/kmalloc.o \
     ${OBJ}/apps-tick-monitor.o \
-	${OBJ}/logging.o
+	${OBJ}/logging.o \
+	${OBJ}/apps-sort.o \
+	${OBJ}/decodeAssembly.o
 
 
 
@@ -149,4 +153,4 @@ genisoimage -A "SCC211" -input-charset utf-8\
 	-R -b boot/grub/stage2_eltorito -no-emul-boot -boot-load-size 4 \
 	-boot-info-table -o bootable.iso ${ISO}
 
-qemu-system-i386 -boot order=d -cdrom bootable.iso
+qemu-system-i386 -s -boot order=d -cdrom bootable.iso

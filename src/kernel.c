@@ -43,6 +43,7 @@ void kmain( void* mbd, unsigned int magic ) {
 
     int returnedCodes = 0;
     vgainit( );
+    sprintf("\r\nSTARTING\r\n");
     clearScreen();
     initGdt();
     setIDT();
@@ -69,28 +70,28 @@ void kmain( void* mbd, unsigned int magic ) {
     // varWrite();
     // installNewPageFull(0xFFFF0000,0xFFFF0000);
     // listPresentPages();
-    uint32_t *addr = kmalloc(200);
-    *addr = 300;
-    sprintf("addr: %x\r\n", addr);
-    addr = kmalloc(500);
-    *addr = 20;
-    addr = kmalloc(600);
+    // uint32_t *addr = kmalloc(200);
+    // *addr = 300;
+    // sprintf("addr: %x\r\n", addr);
+    // addr = kmalloc(500);
+    // *addr = 20;
+    // addr = kmalloc(600);
 
-    *addr = 30;
-    addr = kmalloc(1000);
+    // *addr = 30;
+    // addr = kmalloc(1000);
 
-    *addr = 40;
-    addr = kmalloc(1050);
+    // *addr = 40;
+    // addr = kmalloc(1050);
 
-    *addr = 50;
-    addr = kmalloc(2100);
-    *addr = 60;
-    addr = kmalloc(4000);
-    uint32_t val = *addr;
-    sprintf("Val: %d\r\n", val);
-    *addr = 10;
-    val = *addr;
-    sprintf("Val: %d\r\n", val);
+    // *addr = 50;
+    // addr = kmalloc(2100);
+    // *addr = 60;
+    // addr = kmalloc(4000);
+    // uint32_t val = *addr;
+    // sprintf("Val: %d\r\n", val);
+    // *addr = 10;
+    // val = *addr;
+    // sprintf("Val: %d\r\n", val);
     // addr = kmalloc(5000);
     // listPresentPages();
     // uint32_t *addr = findNextHigherFree(1);

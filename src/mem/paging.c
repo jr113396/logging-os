@@ -5,11 +5,7 @@
 #include "physicalMemManager.h"
 #include "pageFault.h"
 #include "invalidOpcodeFault.h"
-
-#undef autofillpagetable // when defined the page table is auto filled when a pagefault happens
-#undef pagefaultlisting  // when defined list the data from a page fault
-#define pagingLogging
-                         
+ 
 // with help from https://wiki.osdev.org/Setting_Up_Paging and https://wiki.osdev.org/Paging and https://isu-rathnayaka.medium.com/develop-your-own-x86-operating-system-os-8-78a25b945dde
 
 // static uint32_t pageDirectory[NUM_PAGES] __attribute__((aligned(PAGE_FRAME_SIZE))) = {0};
@@ -71,7 +67,7 @@ void setDirEntPres(uint32_t dirIndex) {
 
 int doesDirEntryExist(uint32_t addr) {
     uint16_t index = getPageDirIndex(addr);
-    sprintf("[doesDirEntryExist] Found index for addr: %d\r\n", addr); 
+    sprintf("[doesDirEntryExist] Found index for addr: %ud\r\n", addr); 
     uint32_t pageDirEntry = pageDirectory.entries[index];
 
     sprintf("[doesDirEntryExist] entry has value %d - is Present %d\r\n", pageDirEntry, pageDirEntry & PDE_PRESENT);
@@ -137,24 +133,32 @@ void listPresentPages() {
 }
 
 void installPageTabEntry(uint32_t virtAddr, uint32_t physAddr) {
+    sprintf("[ENTERING INSTALLPAGETABENT]\r\n");
     // virtAddr - where the program thinks its trying to access
     // physAddr - where the data is actually going to be stored
     uint16_t dirPos = getPageDirIndex(virtAddr),
              tabPos = getPageTableIndex(virtAddr);
 
-    uint32_t flags = physAddr | PTE_USER | PTE_READ_WRITE | PTE_PRESENT | (0b110 << avlBitPos);
-    sprintf("[INSTALL PAGE TAB ENTRY]\r\n");
+    uint32_t flags = (uint32_t)getPagesPhysAddr(physAddr) | PTE_USER | PTE_READ_WRITE | PTE_PRESENT | (0b110 << avlBitPos);
     sprintf("Dir Pos: %d\r\n", dirPos);
     sprintf("Tab Pos: %d\r\n", tabPos);
+
+    if (doesDirEntryExist(virtAddr) == 0) {
+        sprintf("Page dir does not exist after creation\r\n");
+        // pageFaultError(regs);
+    }
+
     sprintf("Page Dir Entry Val: %d - addr %d\r\n", pageDirectory.entries[dirPos], getPagesPhysAddr(pageDirectory.entries[dirPos]));
     page_table *pt = (page_table *)getPagesPhysAddr(pageDirectory.entries[dirPos]);
     
     sprintf("Read table at addr %d\r\n", pt);
 
-    sprintf("Current Value of pt at pos: %ud\r\n", pt->entries[tabPos]);
+    // sprintf("Current Value of pt at pos: %ud\r\n", pt->entries[tabPos]);
     pt->entries[tabPos] = flags;
     sprintf("New Value of pt at pos: %ud\r\n", pt->entries[tabPos]);
     sprintf("Set Tab Entry to %ud - %b\r\n", flags, flags);
+    sprintf("[LEAVING INSTALLPAGETABENT]\r\n");
+
 }
 
 
@@ -289,6 +293,7 @@ void initPaging() {
     loadPageDirectory(pageDirectory.entries);
     enablePaging();
     #ifdef pagingLogging
-        // disablePages(); // disable page for the logging system
+        sprintf("Disabling Paging\r\n");
+        disablePages(); // disable page for the logging system
     #endif
 }

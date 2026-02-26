@@ -12,6 +12,10 @@
 #define PAGE_SIZE 4096
 #define avlBitPos 9
 
+#undef autofillpagetable // when defined the page table is auto filled when a pagefault happens
+#undef pagefaultlisting  // when defined list the data from a page fault
+#define pagingLogging
+                        
 
 
 typedef struct {

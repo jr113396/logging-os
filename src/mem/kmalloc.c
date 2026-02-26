@@ -136,6 +136,7 @@ void  *kmalloc(uint32_t numBytes) {
     
     setAutoClearPages(1);
     sprintf("Installed new page tab at addr: %d\r\n", addr);
+    disablePages();
     return addr;
 }
 
