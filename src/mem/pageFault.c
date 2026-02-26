@@ -5,7 +5,7 @@
 #include "kmalloc.h"
 #include <stdlib.h>
 #include "interupts/idt.h"
-
+#include "decodeAssembly.h"
 #include "mem/physicalMemManager.h"
 
 static uint32_t *lastAddr = 0; // the last addr that was written to, captured by the page table 
@@ -13,11 +13,13 @@ static uint32_t oldData = 0; // the data that was stored in the addr before bein
 static uint8_t newData = 0; // was there new data to read from the last addr or has it been read already ? 1 for yes, 0 for no
 static uint32_t count = 0;
 static logType prevType;
-
+static uint32_t oldEIP;
 static uint8_t inFault = 0;
 
-static uint8_t nextInst = 0;
-static uint8_t *nextInstLoc = 0; 
+static uint8_t nextInst[4] = {0};
+static uint32_t *nextInstLoc = 0; 
+
+static logging_data baseLog;
 
 // with help from https://www.youtube.com/watch?v=QIGun_BGuDw
 
@@ -36,17 +38,21 @@ uint8_t isThereNewData() {
 uint32_t readLastAddr() {
     uint32_t data = *(uint32_t *)lastAddr;
 
-    if (prevType == WRITE)
+    if (prevType == WRITE) {
         kprintf("[LOGGING] Addr %x changed from %ud to %ud\r\n", lastAddr, oldData, data);
-    if (prevType == READ)
+        sprintf("[LOGGING] Addr %x changed from %ud to %ud\r\n", lastAddr, oldData, data);
+    }
+    if (prevType == READ){
         kprintf("[LOGGING] Addr %x read - had value %ud\r\n", lastAddr, oldData);
+        sprintf("[LOGGING] Addr %x read - had value %ud\r\n", lastAddr, oldData);
+    }
     newData = 0; // set new data to 0 as we have just read the new data;
     return data;
 }
 logging_data *createLoggingEvent() {
     uint32_t currentData = *(uint32_t *)lastAddr;
-
-    logging_data *data = kmalloc(sizeof(logging_data));
+    sprintf("Allocating mem for logging event\r\n");
+    logging_data *data = &baseLog;//kmalloc(sizeof(logging_data));
     data->addr = (uint32_t)lastAddr;
     data->before = oldData;
     data->after = currentData;
@@ -232,7 +238,10 @@ void pageFaultErrorBits(uint32_t error) {
 
 // called if the pages actually fault
 void pageFaultError(struct InterruptRegisters *regs) {
+    sprintf("[PAGEFAULTERROR]\r\n");
     pageFaultErrorBits(regs->eflags);
+    sprintf("Got err code %d - %b at addr %ud\r\n", regs->eflags, regs->eflags, regs->cr2);
+    
     kprintf("Got err code %d - %b at addr %ud\r\n", regs->eflags, regs->eflags, regs->cr2);
     kprintf("Page Fault\r\n");
     kprintf("Processor Halting\r\n");
@@ -243,10 +252,13 @@ void pageFaultError(struct InterruptRegisters *regs) {
 
 // this function is called when the page fault is caused by the logging system not an actual page fault otherwise the pageFaultError function is called
 void loggingPagingHandler(struct InterruptRegisters *regs) {
+    sprintf("[ENTERING LOGGING HANDLER]\r\n");
     // sprintf("Dealing with page table logging\r\n"); 
     page_directory pageDirectory = getPageDir();
     uint32_t addr = regs->cr2;
+    uint8_t isWrite = ((regs->errorCode & (1 << 1)) != 0);
     uint32_t pageDirIndex = getPageDirIndex(addr);
+    sprintf("Addr: %x\r\n", regs->cr2);
     // pageFaultErrorBits(regs->errorCode);
     // sprintf("setting page dir ent to present - was %d\r\n", pageDirectory.entries[pageDirIndex] & PDE_PRESENT);
     // pageDirectory.entries[pageDirIndex] |= PDE_PRESENT; // enable the page dir
@@ -265,9 +277,10 @@ void loggingPagingHandler(struct InterruptRegisters *regs) {
         // the page table entry does not exist?
         sprintf("Page Dir Entry %d\r\n", pageDirIndex);
         sprintf("Page table entry %d does not exist\r\n", pageTableIndex);
+        pageFaultError(regs);
+
         asm("hlt"::);
     }
-
     // sprintf("Setting page table to present - was %d\r\n", pageTable->entries[pageTableIndex] & PTE_PRESENT);
     pageTable->entries[pageTableIndex] |= PTE_PRESENT; // enable the page table
 
@@ -304,14 +317,17 @@ void loggingPagingHandler(struct InterruptRegisters *regs) {
     viewMem(nextInstLoc-3, 6);
     // asm("hlt"::);
     count++;
+    sprintf("[LEAVING LOGGING HANDLER]\r\n");
+
 }
 
 void breakpointHandler(struct InterruptRegisters *regs) {
-    kprintf("Break point handler running\r\n");
-    displayRegisters(regs);
-    uint8_t newEIP = *((uint8_t *)regs->eip);
-    sprintf("NewEIP: %x\r\n", newEIP);
-    sprintf("NextLoc: %x - EIP: %x - %x\r\n", nextInstLoc, regs->eip, *(uint8_t *)regs->eip);
+    sprintf("[ENTERING BREAKPOINT HANDLER]\r\n");
+    // kprintf("Break point handler running\r\n");
+    // displayRegisters(regs);
+    uint8_t newEIP = *((uint32_t *)regs->eip);
+    // sprintf("NewEIP: %x\r\n", newEIP);
+    // sprintf("NextLoc: %x - EIP: %x - %x\r\n", nextInstLoc, regs->eip, *(uint8_t *)regs->eip);
 
     *((uint8_t*)regs->eip) = nextInst;
     viewMem(nextInstLoc-3, 6);
@@ -320,6 +336,7 @@ void breakpointHandler(struct InterruptRegisters *regs) {
 }
 
 void pageFaultHandler(struct InterruptRegisters *regs) {
+    sprintf("[ENTERING PAGEFAULT HANDLER]\r\n");
     setAutoClearPages(0);
     inFault++;
     
@@ -356,34 +373,48 @@ void pageFaultHandler(struct InterruptRegisters *regs) {
         // sprintf("running logging handler\r\n");
         // this page fault was caused by the logging system rather than 
         // by an actual page fault
+
         loggingPagingHandler(regs);
         // sprintf("Dir is now %d\r\n", pageDirectory.entries[pageDirIndex] & PDE_PRESENT);
 
        
     } else {
     // #endif
+
         // this page fault was actually caused by a page fault rather than by 
         // Make page table
         #ifdef autofillpagetable
+            kprintf("INSTALLING NEW PAGE TABLE\r\n");
+
             page_table *newPageTable = (page_table *)getNewPageTable();
             if (newPageTable == 0) {
                 sprintf("No more page tables to hand out\r\n");
                 pageFaultError(regs);
             }
+            sprintf("AF1\r\n");
             // sprintf("Got new page table\r\n");
             if (installPageDirEntry(newPageTable, getPageDirIndex(addr)) == 0) {
                 sprintf("Failed to install new page dir");
                 pageFaultError(regs);
             }
+            sprintf("AF2\r\n");
+
             sprintf("Does Entry Exist Val: %d\r\n", doesDirEntryExist(addr));
             if (doesDirEntryExist(addr) == 0) {
                 sprintf("Page dir does not exist after creation\r\n");
                 // pageFaultError(regs);
             }
-            installPageTabEntry(addr, *findNextHigherFree(1));
+
+            sprintf("AF3\r\n");
+            installPageTabEntry(addr, (uint32_t)findNextHigherFree(1));
+            sprintf("AF4\r\n");
+
+            kprintf("INSTALLED NEW PAGE TABLE");
+            // loggingPagingHandler(regs);
         
         #else
             // we are not automatically filling the page table so cause faults.   
+            kprintf("Not autofilling page table\r\n"); 
             pageFaultError(regs);
 
         #endif
@@ -432,14 +463,13 @@ void pageFaultHandler(struct InterruptRegisters *regs) {
     //oldData = *(uint32_t *)(regs->eip);
     // *(uint32_t *)(regs->eip) = 0;// 0x0F0E;
     // sprintf("Enabling autoclear pages\r\n");
-
     // if (count < 10) 
     inFault--;
-    // setAutoClearPages(1);
-
+    setAutoClearPages(1);
     if (count > 10000) {
         kprintf("Max PageFaults - Halting\r\n");
         asm("hlt;"::);
     }
+    sprintf("[PAGEFAULT HANDLER RETURNING]\r\n");
 }
 
