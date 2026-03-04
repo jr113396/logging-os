@@ -2,3 +2,6 @@ obj/
 kernel.bin
 isofiles/
 bootable.iso
+log_data
+launch.json
+bochsrc.txt
