@@ -26,7 +26,8 @@ LD=i686-elf-ld
 
 multiserial=1
 enabledBreakpoints=0 # use breakpoints as well as the PIT if 1 otherwise only use PIT if 0
-CFLAGS="-Wall -Wextra -fno-builtin -I src/ -nostdlib -nodefaultlibs -o0 -g -D BREAKPOINTS_ENABLED=$enabledBreakpoints" #-Werror 
+logsInJson=1 # if the logs outputed via serial should be in json or readable format 1 for json 0 for readable
+CFLAGS="-Wall -Wextra -fno-builtin -I src/ -nostdlib -nodefaultlibs -o0 -g -D BREAKPOINTS_ENABLED=$enabledBreakpoints -D JSON_LOGS=$logsInJson" #-Werror 
 
 if [[ "$multiserial" -eq 1 ]]; then
 	CFLAGS+=" -D multiserial"

@@ -21,19 +21,85 @@ void insertLog(logging_data *data) {
     
 }
 void readLog(logging_data * data) {
+    sprintf("READLOG: %d\r\n", JSON_LOGS);
     if (data->type == READ) {
         kprintf("@%d 0x%x: %d\r\n", data->numTicks, data->addr, data->after);
         sprintf("@%d 0x%x: %d\r\n", data->numTicks, data->addr, data->after);
 
+        #if JSON_LOGS == 1
+            char *type = (data->type == WRITE) ? "WRITE"  : "READ";
+            char *device = (data->device) ? "MEMORY" : "OTHER";
+            char *userType = (data->userType == USER) ? "USER" : "SUPERVISOR";
 
-        
-        lprintf("@%d 0x%x: %d\r\n", data->numTicks, data->addr, data->after);
 
+            
+            lprintf(""
+                "{"
+                    "\"addr\":%ud, "
+                    "\"before\": %ud, "
+                    "\"after\": %ud, "
+                    "\"numTicks\": %ud, "
+                    "\"type\": %s, "
+                    "\"device\": %s, "
+                    "\"userType\": %s "
+                "},\r\n",
+                data->addr,
+                data->before,
+                data->after,
+                data->numTicks,
+                type,
+                device,
+                userType
+            );
+            /*
+            
+            {
+                "addr":addr,
+                "before":before,
+                "after":after,
+                "numTicks":numTicks,
+                "type":type,
+                "device":device,
+                "userLevel":userType
+            },
+            
+            
+            
+            */
+        # else
+            lprintf("@%d 0x%x: %d\r\n", data->numTicks, data->addr, data->after);
+        #endif
     } else {
         sprintf("@%d 0x%x: %d -> %d\r\n", data->numTicks, data->addr, data->before, data->after);
         kprintf("@%d 0x%x: %d -> %d\r\n", data->numTicks, data->addr, data->before, data->after);
-        lprintf("@%d 0x%x: %d -> %d\r\n", data->numTicks, data->addr, data->before, data->after);
+        
+        #if JSON_LOGS == 1
+            char *type = (data->type == WRITE) ? "WRITE"  : "READ";
+            char *device = (data->device) ? "MEMORY" : "OTHER";
+            char *userType = (data->userType == USER) ? "USER" : "SUPERVISOR";
 
+
+            lprintf(""
+                "{"
+                    "\"addr\":%ud, "
+                    "\"before\": %ud, "
+                    "\"after\": %ud, "
+                    "\"numTicks\": %ud, "
+                    "\"type\": %s, "
+                    "\"device\": %s, "
+                    "\"userType\": %s "
+                "},\r\n",
+                data->addr,
+                data->before,
+                data->after,
+                data->numTicks,
+                type,
+                device,
+                userType
+            );
+        # else
+            lprintf("@%d 0x%x: %d -> %d\r\n", data->numTicks, data->addr, data->before, data->after);
+        #endif
     }
 }
 void readLogs() {
