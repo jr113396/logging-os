@@ -75,7 +75,7 @@ void readLog(logging_data * data) {
         
         #if JSON_LOGS == 1
             char *type = (data->type == WRITE) ? "WRITE"  : "READ";
-            char *device = (data->device) ? "MEMORY" : "OTHER";
+            char *device = (data->device == MEMORY) ? "MEMORY" : "OTHER";
             char *userType = (data->userType == USER) ? "USER" : "SUPERVISOR";
 
 
