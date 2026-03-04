@@ -8,12 +8,23 @@ typedef enum logType {
     WRITE
 } logType;
 
+typedef enum deviceType { // what device caused the log - memory / disk etc
+    MEMORY
+} deviceType;
+
+typedef enum userLevel {
+    USER,
+    SUPERVISOR
+} userLevel;
+
 typedef struct logging_data {
     uint32_t addr; // what addr is being changed?
     uint32_t before; // what was the previous value?
     uint32_t after; // what was it changed to?
     uint32_t numTicks; // what was the clock tick value when this happened?
     logType type;
+    deviceType device;
+    userLevel userType;
     struct logging_data *next;
 } logging_data;
 

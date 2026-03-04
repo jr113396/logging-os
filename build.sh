@@ -24,7 +24,14 @@ AS=i686-elf-as
 CC=i686-elf-gcc
 LD=i686-elf-ld
 
-CFLAGS="-Wall -Wextra -fno-builtin -I src/ -nostdlib -nodefaultlibs -o0 -g" #-Werror 
+multiserial=1
+enabledBreakpoints=0 # use breakpoints as well as the PIT if 1 otherwise only use PIT if 0
+CFLAGS="-Wall -Wextra -fno-builtin -I src/ -nostdlib -nodefaultlibs -o0 -g -D BREAKPOINTS_ENABLED=$enabledBreakpoints" #-Werror 
+
+if [[ "$multiserial" -eq 1 ]]; then
+	CFLAGS+=" -D multiserial"
+fi
+
 LDFLAGS="-nostdlib " #-nostartfiles -nodefaultlibs
 
 ${AS} -o ${OBJ}/boot.o   			${SRC}/boot.s
@@ -153,4 +160,12 @@ genisoimage -A "SCC211" -input-charset utf-8\
 	-R -b boot/grub/stage2_eltorito -no-emul-boot -boot-load-size 4 \
 	-boot-info-table -o bootable.iso ${ISO}
 
-qemu-system-i386 -s -boot order=d -cdrom bootable.iso
+
+qemuFlags="-s -boot order=d -cdrom bootable.iso"
+
+if [[ "$multiserial" -eq 1 ]]; then
+	qemuFlags+=" -serial stdio -serial file:log_data"
+fi
+
+
+qemu-system-i386 $qemuFlags

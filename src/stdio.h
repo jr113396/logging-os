@@ -11,4 +11,5 @@ int kfprintf(void (*outChar) (char), char *fmt, va_list ap);  // from kprintf
 uint32_t getStr(char *addr, uint32_t maxLen, char ascii); // from stdio.h
 char getChar();
 void sprintf(char *fmt, ...);
+void lprintf(char *fmt, ...); // from logging.h
 #endif

@@ -7,17 +7,22 @@
 #include "interupts/idt.h"
 #include "decodeAssembly.h"
 #include "mem/physicalMemManager.h"
+#include "logging/logging.h"
 
 static uint32_t *lastAddr = 0; // the last addr that was written to, captured by the page table 
 static uint32_t oldData = 0; // the data that was stored in the addr before being changed 
 static uint8_t newData = 0; // was there new data to read from the last addr or has it been read already ? 1 for yes, 0 for no
+static uint8_t opcodesChanged = 0; // have the opcodes stored in nextinst been changed if 1 then they need to be reset, otherwise no
+static uint8_t *opcodeStartAddr = 0;
 static uint32_t count = 0;
 static logType prevType;
 static uint32_t oldEIP;
 static uint8_t inFault = 0;
+static userLevel lastUserType = 0;
 
-static uint8_t nextInst[4] = {0};
-static uint32_t *nextInstLoc = 0; 
+#define NUM_BYTES_STORING 4
+static uint8_t nextInst[NUM_BYTES_STORING] = {0};
+static uint8_t *nextInstLoc = 0; 
 
 static logging_data baseLog;
 
@@ -34,18 +39,36 @@ uint8_t isThereNewData() {
     return newData;
 }
 
+void resetOpcodes() {
+    if (opcodesChanged) {
+        // set them back
+        // get the start of the addr changing
+        uint8_t *currentByte = opcodeStartAddr;
+        // viewMem((uint8_t *)(nextInstLoc-3), 15);
+        for (int byteNum = 0; byteNum < NUM_BYTES_STORING; byteNum++) {
+            // replace the bytes back
+            *(currentByte++) = nextInst[byteNum];
+        }
+        opcodesChanged = 0;
+    }
+}
+
 // reads and returns the last addr and then sets the newData flag to 0 as it has now been read
 uint32_t readLastAddr() {
     uint32_t data = *(uint32_t *)lastAddr;
+    logging_data *log = createLoggingEvent();
+    // if (prevType == WRITE) {
+    //     // kprintf("[LOGGING] Addr %x changed from %ud to %ud\r\n", lastAddr, oldData, data);
+    //     // sprintf("[LOGGING] Addr %x changed from %ud to %ud\r\n", lastAddr, oldData, data);
+    // }
+    // if (prevType == READ){
+    //     // kprintf("[LOGGING] Addr %x read - had value %ud\r\n", lastAddr, oldData);
+    //     // sprintf("[LOGGING] Addr %x read - had value %ud\r\n", lastAddr, oldData);
+    // }
 
-    if (prevType == WRITE) {
-        kprintf("[LOGGING] Addr %x changed from %ud to %ud\r\n", lastAddr, oldData, data);
-        sprintf("[LOGGING] Addr %x changed from %ud to %ud\r\n", lastAddr, oldData, data);
-    }
-    if (prevType == READ){
-        kprintf("[LOGGING] Addr %x read - had value %ud\r\n", lastAddr, oldData);
-        sprintf("[LOGGING] Addr %x read - had value %ud\r\n", lastAddr, oldData);
-    }
+    readLog(log);
+    resetOpcodes();
+
     newData = 0; // set new data to 0 as we have just read the new data;
     return data;
 }
@@ -58,8 +81,16 @@ logging_data *createLoggingEvent() {
     data->after = currentData;
     data->numTicks = getTickCount();
     data->type = prevType;
+    data->device = MEMORY;
+    data->userType = lastUserType;
     data->next = NULL;
+    
+    // reset all the opcodes back incase they havent been
+    resetOpcodes();
+    
+    
     newData = 0;
+
     return data;
 }
 uint32_t getOldData() {
@@ -195,7 +226,6 @@ void pageFaultErrorBits(uint32_t error) {
     sprintf("*                            *\r\n");
     sprintf("******************************\r\n");
     sprintf("%032b\r\n", error);
-
     sprintf("Present Bit \t\t\t -> ");
     if ((error & (1 << 0)) != 0)
         sprintf("Page Protection Violation\r\n");
@@ -239,6 +269,7 @@ void pageFaultErrorBits(uint32_t error) {
 // called if the pages actually fault
 void pageFaultError(struct InterruptRegisters *regs) {
     sprintf("[PAGEFAULTERROR]\r\n");
+    sprintf("Addr: %ux\r\n", regs->cr2);
     pageFaultErrorBits(regs->eflags);
     sprintf("Got err code %d - %b at addr %ud\r\n", regs->eflags, regs->eflags, regs->cr2);
     
@@ -308,14 +339,27 @@ void loggingPagingHandler(struct InterruptRegisters *regs) {
             prevType = READ;
 
     }
-    nextInstLoc = (uint8_t *)regs->eip;
-    uint8_t nextInst = *nextInstLoc;
-    viewMem(nextInstLoc-3, 6);
-
-    *nextInstLoc = 0xCC; // debugger call to int 3 https://c9x.me/x86/html/file_module_x86_id_142.html
-    kprintf("EIP1: %d - %x\r\n", nextInstLoc, nextInst);
-    viewMem(nextInstLoc-3, 6);
-    // asm("hlt"::);
+    lastUserType = SUPERVISOR; // what was the user type of this access -- supervisor vs normal user
+    
+    #if BREAKPOINTS_ENABLED == 1
+    uint8_t *currentByte = nextInstLoc;
+    oldEIP = regs->eip;
+    nextInstLoc = (uint8_t *)regs->eip + 4;
+    
+    // viewMem((uint8_t *)(nextInstLoc-3), 15);
+    opcodeStartAddr = currentByte;
+    matchOpcode((uint8_t *)oldEIP, 10, 0);
+    viewMem((uint8_t *)(oldEIP), 10);
+    for (int byteNum = 0; byteNum < NUM_BYTES_STORING; byteNum++) {
+        // store te next NUM_BYTES_STORING instructions in an array and replace with 0xCC - call to debugger 
+        nextInst[byteNum] = *(currentByte);
+        *(currentByte++) = 0xCC;// debugger call to int 3 https://c9x.me/x86/html/file_module_x86_id_142.html
+    }
+    opcodesChanged = 1;
+    
+    #endif
+    // kprintf("EIP1: %d - %x\r\n", nextInstLoc, nextInst);
+    // viewMem((uint8_t *)(nextInstLoc-3), 6);
     count++;
     sprintf("[LEAVING LOGGING HANDLER]\r\n");
 
@@ -325,13 +369,21 @@ void breakpointHandler(struct InterruptRegisters *regs) {
     sprintf("[ENTERING BREAKPOINT HANDLER]\r\n");
     // kprintf("Break point handler running\r\n");
     // displayRegisters(regs);
-    uint8_t newEIP = *((uint32_t *)regs->eip);
+    uint32_t newEIP = oldEIP;//regs->eip-1;
     // sprintf("NewEIP: %x\r\n", newEIP);
     // sprintf("NextLoc: %x - EIP: %x - %x\r\n", nextInstLoc, regs->eip, *(uint8_t *)regs->eip);
+    viewMem((uint8_t *)(oldEIP), 10);
 
-    *((uint8_t*)regs->eip) = nextInst;
-    viewMem(nextInstLoc-3, 6);
+    resetOpcodes();
+    if (isThereNewData()) {
+        // no
+        // so read it
+        readLastAddr();
+    }
 
+    regs->eip = (uint32_t)newEIP ;
+    viewMem((uint8_t *)(oldEIP), 10);
+    disablePages();
     // asm("hlt;": :);
 }
 

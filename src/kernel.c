@@ -52,6 +52,10 @@ void kmain( void* mbd, unsigned int magic ) {
     initKeyboard();
     returnedCodes += initSerial(1);
 
+    #ifdef multiserial
+        returnedCodes += initSerial(2);
+    #endif
+        
     sprintf("Starting Protected Mode \r\n");
     enterProtectedMode();
     sprintf("Protected Mode Enabled\r\n");
