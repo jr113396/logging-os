@@ -85,9 +85,9 @@ void readLog(logging_data * data) {
                     "\"before\": %ud, "
                     "\"after\": %ud, "
                     "\"numTicks\": %ud, "
-                    "\"type\": %s, "
-                    "\"device\": %s, "
-                    "\"userType\": %s "
+                    "\"type\": \"%s\", "
+                    "\"device\": \"%s\", "
+                    "\"userType\": \"%s\" "
                 "},\r\n",
                 data->addr,
                 data->before,

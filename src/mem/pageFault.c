@@ -342,20 +342,20 @@ void loggingPagingHandler(struct InterruptRegisters *regs) {
     lastUserType = SUPERVISOR; // what was the user type of this access -- supervisor vs normal user
     
     #if BREAKPOINTS_ENABLED == 1
-    uint8_t *currentByte = nextInstLoc;
-    oldEIP = regs->eip;
-    nextInstLoc = (uint8_t *)regs->eip + 4;
-    
-    // viewMem((uint8_t *)(nextInstLoc-3), 15);
-    opcodeStartAddr = currentByte;
-    matchOpcode((uint8_t *)oldEIP, 10, 0);
-    viewMem((uint8_t *)(oldEIP), 10);
-    for (int byteNum = 0; byteNum < NUM_BYTES_STORING; byteNum++) {
-        // store te next NUM_BYTES_STORING instructions in an array and replace with 0xCC - call to debugger 
-        nextInst[byteNum] = *(currentByte);
-        *(currentByte++) = 0xCC;// debugger call to int 3 https://c9x.me/x86/html/file_module_x86_id_142.html
-    }
-    opcodesChanged = 1;
+        uint8_t *currentByte = nextInstLoc;
+        oldEIP = regs->eip;
+        nextInstLoc = (uint8_t *)regs->eip + 4;
+        
+        // viewMem((uint8_t *)(nextInstLoc-3), 15);
+        opcodeStartAddr = currentByte;
+        matchOpcode((uint8_t *)oldEIP, 10, 0);
+        // viewMem((uint8_t *)(oldEIP), 10);
+        for (int byteNum = 0; byteNum < NUM_BYTES_STORING; byteNum++) {
+            // store te next NUM_BYTES_STORING instructions in an array and replace with 0xCC - call to debugger 
+            nextInst[byteNum] = *(currentByte);
+            *(currentByte++) = 0xCC;// debugger call to int 3 https://c9x.me/x86/html/file_module_x86_id_142.html
+        }
+        opcodesChanged = 1;
     
     #endif
     // kprintf("EIP1: %d - %x\r\n", nextInstLoc, nextInst);
@@ -366,13 +366,15 @@ void loggingPagingHandler(struct InterruptRegisters *regs) {
 }
 
 void breakpointHandler(struct InterruptRegisters *regs) {
+    setAutoClearPages(0);
+
     sprintf("[ENTERING BREAKPOINT HANDLER]\r\n");
     // kprintf("Break point handler running\r\n");
     // displayRegisters(regs);
     uint32_t newEIP = oldEIP;//regs->eip-1;
     // sprintf("NewEIP: %x\r\n", newEIP);
     // sprintf("NextLoc: %x - EIP: %x - %x\r\n", nextInstLoc, regs->eip, *(uint8_t *)regs->eip);
-    viewMem((uint8_t *)(oldEIP), 10);
+    // viewMem((uint8_t *)(oldEIP), 10);
 
     resetOpcodes();
     if (isThereNewData()) {
@@ -382,8 +384,10 @@ void breakpointHandler(struct InterruptRegisters *regs) {
     }
 
     regs->eip = (uint32_t)newEIP ;
-    viewMem((uint8_t *)(oldEIP), 10);
+    // viewMem((uint8_t *)(oldEIP), 10);
     disablePages();
+    setAutoClearPages(1);
+
     // asm("hlt;": :);
 }
 

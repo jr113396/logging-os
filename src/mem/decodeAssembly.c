@@ -84,6 +84,11 @@ void matchOpcode(uint8_t *addr, uint32_t numChars, uint32_t *numInstr) {
                 sprintf("ENT"); 
                 numOperands = 2; // 2 operands for enter
                 break;
+            
+            case 0x90:
+                sprintf("NOP");
+                numOperands = 0;
+                break;
 
 
             case 0x10:
