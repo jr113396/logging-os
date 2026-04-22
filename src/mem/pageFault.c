@@ -7,7 +7,8 @@
 #include "interupts/idt.h"
 #include "decodeAssembly.h"
 #include "mem/physicalMemManager.h"
-#include "logging/logging.h"
+#include <logging/logging.h>
+#include <loggingLevel.h>
 
 static uint32_t *lastAddr = 0; // the last addr that was written to, captured by the page table 
 static uint32_t oldData = 0; // the data that was stored in the addr before being changed 
@@ -18,11 +19,11 @@ static uint32_t count = 0;
 static logType prevType;
 static uint32_t oldEIP;
 static uint8_t inFault = 0;
+static uint32_t instructionAddr = 0;
 static userLevel lastUserType = 0;
 
 #define NUM_BYTES_STORING 4
 static uint8_t nextInst[NUM_BYTES_STORING] = {0};
-static uint8_t *nextInstLoc = 0; 
 
 static logging_data baseLog;
 
@@ -44,7 +45,6 @@ void resetOpcodes() {
         // set them back
         // get the start of the addr changing
         uint8_t *currentByte = opcodeStartAddr;
-        // viewMem((uint8_t *)(nextInstLoc-3), 15);
         for (int byteNum = 0; byteNum < NUM_BYTES_STORING; byteNum++) {
             // replace the bytes back
             *(currentByte++) = nextInst[byteNum];
@@ -74,12 +74,13 @@ uint32_t readLastAddr() {
 }
 logging_data *createLoggingEvent() {
     uint32_t currentData = *(uint32_t *)lastAddr;
-    sprintf("Allocating mem for logging event\r\n");
+    // sprintf("Allocating mem for logging event\r\n");
     logging_data *data = &baseLog;//kmalloc(sizeof(logging_data));
     data->addr = (uint32_t)lastAddr;
     data->before = oldData;
     data->after = currentData;
     data->numTicks = getTickCount();
+    data->instAddr = instructionAddr;
     data->type = prevType;
     data->device = MEMORY;
     data->userType = lastUserType;
@@ -107,12 +108,15 @@ logType getLogType() {
 //*                       *
 //*************************
 void pageDirFlagsBits(uint32_t dir) {
-    sprintf("\r\n");
-    sprintf("******************************\r\n");
-    sprintf("*                            *\r\n");
-    sprintf("*       DIR FLAGS            *\r\n");
-    sprintf("*                            *\r\n");
-    sprintf("******************************\r\n");
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
+        sprintf("\r\n");
+        sprintf("******************************\r\n");
+        sprintf("*                            *\r\n");
+        sprintf("*       DIR FLAGS            *\r\n");
+        sprintf("*                            *\r\n");
+        sprintf("******************************\r\n");
+    #endif
+    
 
     if ((dir & PDE_PRESENT) != 0)
         sprintf("Dir Present\r\n");
@@ -168,6 +172,7 @@ void pageDirFlagsBits(uint32_t dir) {
 }
 
 void pageTableFlagsBits(uint32_t tab) {
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("\r\n");
     sprintf("******************************\r\n");
     sprintf("*                            *\r\n");
@@ -175,6 +180,7 @@ void pageTableFlagsBits(uint32_t tab) {
     sprintf("*                            *\r\n");
     sprintf("******************************\r\n");
     sprintf("Tab Bits: %ub\r\n", tab);
+    #endif
     if ((tab & PTE_PRESENT) != 0)
         sprintf("Tab Present\r\n");
     else
@@ -219,6 +225,7 @@ void pageTableFlagsBits(uint32_t tab) {
 }
 
 void pageFaultErrorBits(uint32_t error) {
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("\r\n");
     sprintf("******************************\r\n");
     sprintf("*                            *\r\n");
@@ -226,6 +233,7 @@ void pageFaultErrorBits(uint32_t error) {
     sprintf("*                            *\r\n");
     sprintf("******************************\r\n");
     sprintf("%032b\r\n", error);
+    #endif
     sprintf("Present Bit \t\t\t -> ");
     if ((error & (1 << 0)) != 0)
         sprintf("Page Protection Violation\r\n");
@@ -268,11 +276,13 @@ void pageFaultErrorBits(uint32_t error) {
 
 // called if the pages actually fault
 void pageFaultError(struct InterruptRegisters *regs) {
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_ERROR
     sprintf("[PAGEFAULTERROR]\r\n");
     sprintf("Addr: %ux\r\n", regs->cr2);
+    
     pageFaultErrorBits(regs->eflags);
     sprintf("Got err code %d - %b at addr %ud\r\n", regs->eflags, regs->eflags, regs->cr2);
-    
+    #endif
     kprintf("Got err code %d - %b at addr %ud\r\n", regs->eflags, regs->eflags, regs->cr2);
     kprintf("Page Fault\r\n");
     kprintf("Processor Halting\r\n");
@@ -283,13 +293,18 @@ void pageFaultError(struct InterruptRegisters *regs) {
 
 // this function is called when the page fault is caused by the logging system not an actual page fault otherwise the pageFaultError function is called
 void loggingPagingHandler(struct InterruptRegisters *regs) {
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("[ENTERING LOGGING HANDLER]\r\n");
+    #endif
     // sprintf("Dealing with page table logging\r\n"); 
     page_directory pageDirectory = getPageDir();
     uint32_t addr = regs->cr2;
     uint8_t isWrite = ((regs->errorCode & (1 << 1)) != 0);
     uint32_t pageDirIndex = getPageDirIndex(addr);
+    
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("Addr: %x\r\n", regs->cr2);
+    #endif
     // pageFaultErrorBits(regs->errorCode);
     // sprintf("setting page dir ent to present - was %d\r\n", pageDirectory.entries[pageDirIndex] & PDE_PRESENT);
     // pageDirectory.entries[pageDirIndex] |= PDE_PRESENT; // enable the page dir
@@ -306,8 +321,10 @@ void loggingPagingHandler(struct InterruptRegisters *regs) {
     // check the addr of the page table and page table entry to make sure they are actually the correct values
     if (pageDirPhysVal == 0 || getPagesPhysAddr(pageTable->entries[pageTableIndex]) == 0) {
         // the page table entry does not exist?
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_ERROR
         sprintf("Page Dir Entry %d\r\n", pageDirIndex);
         sprintf("Page table entry %d does not exist\r\n", pageTableIndex);
+        #endif
         pageFaultError(regs);
 
         asm("hlt"::);
@@ -315,65 +332,72 @@ void loggingPagingHandler(struct InterruptRegisters *regs) {
     // sprintf("Setting page table to present - was %d\r\n", pageTable->entries[pageTableIndex] & PTE_PRESENT);
     pageTable->entries[pageTableIndex] |= PTE_PRESENT; // enable the page table
 
-    // has the data been read since the last go round?
-    if (isThereNewData()) {
-        // no
-        // so read it
-        readLastAddr();
-    }
-    if (inFault <= 1) {
-        // set the addr that is attempted to be written to
-        lastAddr = (uint32_t *)regs->cr2;
-    
-        // set old data to be the data that was there before
-        oldData = *lastAddr;
-    
-        // and set the flag that there is new data
-        newData = 1;
-    
-        if ((regs->errorCode & (1 << 1)) != 0)
-            // sprintf("Write Access\r\n");
-            prevType = WRITE;
-        else
-            // sprintf("Read Access\r\n");
-            prevType = READ;
-
-    }
-    lastUserType = SUPERVISOR; // what was the user type of this access -- supervisor vs normal user
-    
-    #if BREAKPOINTS_ENABLED == 1
-        uint8_t *currentByte = nextInstLoc;
-        oldEIP = regs->eip;
-        nextInstLoc = (uint8_t *)regs->eip + 4;
-        
-        // viewMem((uint8_t *)(nextInstLoc-3), 15);
-        opcodeStartAddr = currentByte;
-        matchOpcode((uint8_t *)oldEIP, 10, 0);
-        // viewMem((uint8_t *)(oldEIP), 10);
-        for (int byteNum = 0; byteNum < NUM_BYTES_STORING; byteNum++) {
-            // store te next NUM_BYTES_STORING instructions in an array and replace with 0xCC - call to debugger 
-            nextInst[byteNum] = *(currentByte);
-            *(currentByte++) = 0xCC;// debugger call to int 3 https://c9x.me/x86/html/file_module_x86_id_142.html
+    if (isLoggingEnabled()) {
+        // has the data been read since the last go round?
+        if (isThereNewData()) {
+            // no
+            // so read it
+            readLastAddr();
         }
-        opcodesChanged = 1;
+        if (inFault <= 1) {
+            // set the addr that is attempted to be written to
+            lastAddr = (uint32_t *)regs->cr2;
+        
+            // set old data to be the data that was there before
+            oldData = *lastAddr;
+        
+            // and set the flag that there is new data
+            newData = 1;
+        
+            if ((regs->errorCode & (1 << 1)) != 0)
+                // sprintf("Write Access\r\n");
+                prevType = WRITE;
+            else
+                // sprintf("Read Access\r\n");
+                prevType = READ;
     
-    #endif
-    // kprintf("EIP1: %d - %x\r\n", nextInstLoc, nextInst);
-    // viewMem((uint8_t *)(nextInstLoc-3), 6);
+            lastUserType = SUPERVISOR; // what was the user type of this access -- supervisor vs normal user
+            instructionAddr = (uint32_t)regs->eip; // what was the address of the instruction that caused the fault
+            #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
+            pageFaultErrorBits(regs->errorCode);
+            #endif
+    
+    
+            // viewMem((uint8_t *)regs->cr2, 100);
+    
+            #if BREAKPOINTS_ENABLED == 1
+                oldEIP = regs->eip;
+                opcodeStartAddr = matchOpcode((uint8_t *)oldEIP, 20, 1);
+                
+                uint8_t *currentByte = opcodeStartAddr;
+                // sprintf("Current Byte: %x \r\n", currentByte);
+                for (int byteNum = 0; byteNum < NUM_BYTES_STORING; byteNum++) {
+                    // store te next NUM_BYTES_STORING instructions in an array and replace with 0xCC - call to debugger 
+                    nextInst[byteNum] = *(currentByte);
+                    *(currentByte++) = 0xCC;// debugger call to int 3 https://c9x.me/x86/html/file_module_x86_id_142.html
+                }
+                // viewMem((uint8_t *)(oldEIP), 10);
+                opcodesChanged = 1;
+                
+            #endif
+        }
+    }
     count++;
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("[LEAVING LOGGING HANDLER]\r\n");
+    #endif
 
 }
 
 void breakpointHandler(struct InterruptRegisters *regs) {
     setAutoClearPages(0);
-
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("[ENTERING BREAKPOINT HANDLER]\r\n");
+    #endif
     // kprintf("Break point handler running\r\n");
     // displayRegisters(regs);
-    uint32_t newEIP = oldEIP;//regs->eip-1;
+    uint32_t newEIP = regs->eip;// (uint32_t )matchOpcode((uint8_t *)oldEIP, 10, 1);//regs->eip;//regs->eip-1;
     // sprintf("NewEIP: %x\r\n", newEIP);
-    // sprintf("NextLoc: %x - EIP: %x - %x\r\n", nextInstLoc, regs->eip, *(uint8_t *)regs->eip);
     // viewMem((uint8_t *)(oldEIP), 10);
 
     resetOpcodes();
@@ -392,7 +416,9 @@ void breakpointHandler(struct InterruptRegisters *regs) {
 }
 
 void pageFaultHandler(struct InterruptRegisters *regs) {
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("[ENTERING PAGEFAULT HANDLER]\r\n");
+    #endif 
     setAutoClearPages(0);
     inFault++;
     
@@ -425,6 +451,7 @@ void pageFaultHandler(struct InterruptRegisters *regs) {
 
     // #ifdef pagingLogging
     // sprintf("%b - %b \r\n", (avlBits == 0b110), pageDirectory.entries[pageDirIndex]) ;
+
     if ((avlBits & 0b111) == 0b110) {
         // sprintf("running logging handler\r\n");
         // this page fault was caused by the logging system rather than 
@@ -444,26 +471,29 @@ void pageFaultHandler(struct InterruptRegisters *regs) {
 
             page_table *newPageTable = (page_table *)getNewPageTable();
             if (newPageTable == 0) {
+                #if _SERIAL_LOGGING_LEVEL >= _LOGGING_ERROR
                 sprintf("No more page tables to hand out\r\n");
+                #endif
                 pageFaultError(regs);
             }
-            sprintf("AF1\r\n");
             // sprintf("Got new page table\r\n");
             if (installPageDirEntry(newPageTable, getPageDirIndex(addr)) == 0) {
+                #if _SERIAL_LOGGING_LEVEL >= _LOGGING_ERROR
                 sprintf("Failed to install new page dir");
+                #endif
                 pageFaultError(regs);
             }
-            sprintf("AF2\r\n");
-
-            sprintf("Does Entry Exist Val: %d\r\n", doesDirEntryExist(addr));
+            #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
+                sprintf("Does Entry Exist Val: %d\r\n", doesDirEntryExist(addr));
+            #endif
             if (doesDirEntryExist(addr) == 0) {
+                #if _SERIAL_LOGGING_LEVEL >= _LOGGING_ERROR
                 sprintf("Page dir does not exist after creation\r\n");
+                #endif
                 // pageFaultError(regs);
             }
 
-            sprintf("AF3\r\n");
             installPageTabEntry(addr, (uint32_t)findNextHigherFree(1));
-            sprintf("AF4\r\n");
 
             kprintf("INSTALLED NEW PAGE TABLE");
             // loggingPagingHandler(regs);
@@ -520,12 +550,16 @@ void pageFaultHandler(struct InterruptRegisters *regs) {
     // *(uint32_t *)(regs->eip) = 0;// 0x0F0E;
     // sprintf("Enabling autoclear pages\r\n");
     // if (count < 10) 
+    // loadPageDirectory(pageDirectory.entries); // then reload the table to clear the cache?
     inFault--;
+
     setAutoClearPages(1);
     if (count > 10000) {
         kprintf("Max PageFaults - Halting\r\n");
         asm("hlt;"::);
     }
-    sprintf("[PAGEFAULT HANDLER RETURNING]\r\n");
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
+        sprintf("[PAGEFAULT HANDLER RETURNING]\r\n");
+    #endif
 }
 

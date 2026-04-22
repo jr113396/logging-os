@@ -3,5 +3,5 @@
 
 #include <stdint.h>
 
-void matchOpcode(uint8_t *addr, uint32_t numChars, uint32_t *numInstr);
+uint8_t *matchOpcode(uint8_t *addr, uint32_t numChars, uint32_t numInstr);
 #endif

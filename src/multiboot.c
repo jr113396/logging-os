@@ -1,4 +1,5 @@
 #include "globals.h"
+#include <loggingLevel.h>
 #include "multiboot.h"
 #include <stdio.h>
 
@@ -32,19 +33,24 @@ contigousMemStruct getLargestMemory(void *mbd, unsigned int magic) {
       mmap     = (struct memorymap *)  bootinfo->mmap_addr;
       mmap_end = (struct memorymap *) (bootinfo->mmap_addr+bootinfo->mmap_len);
       while (mmap < mmap_end) {
-         sprintf ("Memory: %08ux,%08uxh, Length: %08ux,%08uxh %s\r\n",
-            mmap->base_addrh, mmap->base_addrl,
-            mmap->lengthh,    mmap->lengthl,
-            (mmap->type == 1) ? "Avail." : "Resvd.");
+         #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
+            sprintf ("Memory: %08ux,%08uxh, Length: %08ux,%08uxh %s\r\n",
+               mmap->base_addrh, mmap->base_addrl,
+               mmap->lengthh,    mmap->lengthl,
+               (mmap->type == 1) ? "Avail." : "Resvd.");
+         #endif
          
          if (mmap->type == 1) {
             if (mem.length < mmap->lengthl) {
                mem.start = mmap->base_addrl;
                mem.end = mmap->base_addrl + mmap->lengthl;
                mem.length = mmap->lengthl;
-               sprintf("Found new longest with start, %d, end %d, and len %d\r\n", mem.start, mem.end, mem.length);
+               #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
+                  sprintf("Found new longest with start, %d, end %d, and len %d\r\n", mem.start, mem.end, mem.length);
+               #endif
             }
          }
+
          mmap = (struct memorymap *)
                   (mmap->size + sizeof(mmap->size) + (uint32_t)mmap);
       }
@@ -72,12 +78,16 @@ getbootinfo( void* mbd, unsigned int magic ) {
    bootinfo = (struct multiboot_info *)  mbd;
 
    if (bootinfo->flags & MBTINFO_MEMORY) {
+      #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
       sprintf ("Memory: %ud - %udKB\r\n",
          bootinfo->mem_lower, bootinfo->mem_upper);
+      #endif
    }
  
    if (bootinfo->flags & MBTINFO_CMDLINE) {
+      #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
       sprintf ("Command line: %s\r\n", (char *) bootinfo->cmdline);
+      #endif
    }
  
    if (bootinfo->flags & MBTINFO_MEMORYMAP) {
@@ -85,18 +95,23 @@ getbootinfo( void* mbd, unsigned int magic ) {
       mmap_end = (struct memorymap *) (bootinfo->mmap_addr+bootinfo->mmap_len);
 
       while (mmap < mmap_end) {
+         
+         #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
          sprintf ("Memory: %08ux,%08uxh, Length: %08ux,%08uxh %s\r\n",
             mmap->base_addrh, mmap->base_addrl,
             mmap->lengthh,    mmap->lengthl,
             (mmap->type == 1) ? "Avail." : "Resvd.");
-
+            
+         #endif
          mmap = (struct memorymap *)
                    (mmap->size + sizeof(mmap->size) + (uint32_t)mmap);
       }
    }
  
    if (bootinfo->flags & MBTINFO_BTLDRNAME) {
-      sprintf ("Bootloader: %s\r\n", (char *) bootinfo->bootldrname);
+      #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
+         sprintf ("Bootloader: %s\r\n", (char *) bootinfo->bootldrname);
+      #endif
    }
  
 }

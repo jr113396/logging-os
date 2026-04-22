@@ -16,8 +16,9 @@
 // pitModeReg (0x43)
 
 #define pitFreq 1193180
-
+#define msPIT // this is for is the pit should be at 1ms mode or as fast as possible 
 void setAutoClearPages(uint8_t val);
+uint8_t getAutoClearPages();
 
 void pitHandler(struct InterruptRegisters *regs);
 

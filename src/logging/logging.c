@@ -3,8 +3,11 @@
 #include <stdio.h>
 #include <mem/kmalloc.h>
 #include <drivers/serial/serial.h>
+#include <timers/pit/pit.h>
+#include <mem/paging.h>
 
 static logging_data *head = NULL;
+static uint8_t loggingEnabled = 1;
 
 void insertLog(logging_data *data) {
     if (!head)
@@ -21,7 +24,6 @@ void insertLog(logging_data *data) {
     
 }
 void readLog(logging_data * data) {
-    sprintf("READLOG: %d\r\n", JSON_LOGS);
     if (data->type == READ) {
         kprintf("@%d 0x%x: %d\r\n", data->numTicks, data->addr, data->after);
         sprintf("@%d 0x%x: %d\r\n", data->numTicks, data->addr, data->after);
@@ -39,7 +41,8 @@ void readLog(logging_data * data) {
                     "\"before\": %ud, "
                     "\"after\": %ud, "
                     "\"numTicks\": %ud, "
-                    "\"type\": %s, "
+                    "\"instAddr\": %ud, "
+                    "\"type\": \"%s\", "
                     "\"device\": %s, "
                     "\"userType\": %s "
                 "},\r\n",
@@ -47,6 +50,7 @@ void readLog(logging_data * data) {
                 data->before,
                 data->after,
                 data->numTicks,
+                data->instAddr,
                 type,
                 device,
                 userType
@@ -85,6 +89,7 @@ void readLog(logging_data * data) {
                     "\"before\": %ud, "
                     "\"after\": %ud, "
                     "\"numTicks\": %ud, "
+                    "\"instAddr\": %ud, "
                     "\"type\": \"%s\", "
                     "\"device\": \"%s\", "
                     "\"userType\": \"%s\" "
@@ -93,6 +98,7 @@ void readLog(logging_data * data) {
                 data->before,
                 data->after,
                 data->numTicks,
+                data->instAddr,
                 type,
                 device,
                 userType
@@ -162,4 +168,34 @@ void lprintf(char *fmt, ...) {
     va_start(ap, fmt);
     kfprintf(outLoggingSerialChar, fmt, ap);
     va_end(ap);
+}
+
+void loggingWait() {
+    // if breakpoints are enabled then skip this pause, if not pause for the pit to catchup
+    #if BREAKPOINTS_ENABLED == 1 
+        // do nothing 
+    #else
+        // otherwise using the PIT to pause 1 tick to let the PIT catch up
+        #ifndef TEST_CASE_3
+            pauseTicks(1);
+        #endif
+    #endif
+}
+
+uint8_t isLoggingEnabled() {
+    return loggingEnabled;
+}
+
+void setLoggingEnabled(uint8_t isEnabled) {
+    loggingEnabled = isEnabled;
+}
+
+void enableLogging() {
+    sprintf("Logging Enabled\r\n");
+    setLoggingEnabled(1);
+    disablePages();
+}
+void disableLogging() {
+    sprintf("Logging Disabled\r\n");
+    setLoggingEnabled(0);
 }

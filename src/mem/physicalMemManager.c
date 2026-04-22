@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "stdmem.h"
 #include <maths.h>
+#include <loggingLevel.h>
 
 uint32_t bitmap[LENGTH_OF_BITMAP] = {0};
 uint32_t *lastAccessed = bitmap;
@@ -13,12 +14,14 @@ uint32_t *memStart = 0, // this needs to be set to the page dir ent 1+
 uint32_t lowerBitmap[LENGTH_OF_LOWER_MAP] = {0};
 
 void viewMem(uint8_t *addr, uint32_t length) {
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("\r\n");
     sprintf("******************************\r\n");
     sprintf("*                            *\r\n");
     sprintf("*    Mem Map View Start      *\r\n");
     sprintf("*                            *\r\n");
     sprintf("******************************\r\n");
+    #endif
 
     sprintf("Mem Map of area %d - %x for %d bytes\r\n", addr, addr, length);
     for (uint32_t i = 0; i < length; i++) {
@@ -51,7 +54,9 @@ void viewMem(uint8_t *addr, uint32_t length) {
 void setHigherMemStart(uint32_t * memStartAddr) {
     memStart = memStartAddr;
     // viewMem((uint32_t *)a-10000, 30000);
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("Memstart addr = %ud -> last accessed %ud, bitmap %d\r\n", &memStart, lastAccessed, bitmap);
+    #endif
     memset(bitmap, 0, LENGTH_OF_BITMAP);
 }
 
@@ -61,34 +66,41 @@ void setLowerMem(uint32_t *start, uint32_t *end) {
     // sprintf("Correcting Dist: %d -> %d - %d\r\n", correctingDist, PAGE_FRAME_SIZE, distPast);
     lowerMemStart = (uint32_t *)((uint32_t)start + correctingDist);
     lowerMemEnd = end;
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("[LOWERMEM] %d past - %d start -- corrected to %d\r\n", distPast, start, lowerMemStart);
     sprintf("Set lower Mem Bounds: 0x%x - 0x%x -- 0x%x bytes\r\n", lowerMemStart, lowerMemEnd, lowerMemEnd-lowerMemStart);
+    #endif
     memset(lowerBitmap, 0, lowerMemEnd-lowerMemStart);
 }
 
 
 uint32_t returnPage(uint32_t *addr, uint32_t *map, uint32_t length, uint32_t *start) {
     // sets a given page in a map as free to be used by findNextFreePage
+    uint32_t intoMap = (addr - start);
+    uint32_t pageIndex = intoMap/PAGE_SIZE;
+    uint32_t mapIndex = pageIndex / 32;
+    uint8_t bitPos = mod(pageIndex, 32);
+    uint8_t avlBits = ((uint32_t) addr >> 8) & (0b111);
+    uint32_t mapVal = map[mapIndex] & (1 << bitPos);
+    
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("********Return Page Start********\r\n");
     sprintf("Addr: %ud, Start: %ud\r\n", addr, start);
-    uint32_t intoMap = (addr - start);
     sprintf("Into Map: %ud\r\n", intoMap);
-
-    uint32_t pageIndex = intoMap/PAGE_SIZE;
-    sprintf("pageIndex: %d\r\n\n", pageIndex);
-
-    uint32_t mapIndex = pageIndex / 32;
-    sprintf("mapIndex: %d\r\n", mapIndex);
-    uint8_t bitPos = mod(pageIndex, 32);
-    sprintf("bitPos: %d\r\n", bitPos);
-
-    uint8_t avlBits = ((uint32_t) addr >> 8) & (0b111);
-    sprintf("Got avlBits %ub \r\n", avlBits);
     
-    uint32_t mapVal = map[mapIndex] & (1 << bitPos);
+    sprintf("pageIndex: %d\r\n\n", pageIndex);
+    
+    sprintf("mapIndex: %d\r\n", mapIndex);
+    sprintf("bitPos: %d\r\n", bitPos);
+    sprintf("Got avlBits %ub \r\n", avlBits);
     sprintf("Looked in index: %d at pos %d and found val %d\r\n", mapIndex, bitPos, mapVal);
+    
+    #endif
+    
     if (mapVal == 0) {
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_ERROR
         sprintf("[return page] Map val found == 0? maybe double freed\r\n");
+        #endif
         return 0;
     }
     else {
@@ -112,11 +124,14 @@ uint32_t *findNextFreePage(uint8_t numPages, uint32_t *map, uint32_t length, uin
     // returns the addr of the next free page given a bitmap, length of the bitmap and where the start of the map maps to in memory
     
     if (numPages > 32) {
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_ERROR
         sprintf("Incorrect number of pages requested %d, must be 1-32\r\n", numPages);
+        #endif
         return 0;
     }
-    
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("\r\nAlocating %d pages\r\n", numPages);
+    #endif
     uint32_t mask = 0;
     for (int i = 0; i < numPages; i++) {
         mask |= (1 << i);
@@ -124,7 +139,9 @@ uint32_t *findNextFreePage(uint8_t numPages, uint32_t *map, uint32_t length, uin
 
     
     for (uint32_t i = 0; i < length; i++){
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
         sprintf("%ud - %ub\r\n", map + i, map[i]);
+        #endif
 
         if ((map[i] & 0xFFFFFFFF) == 0xFFFFFFFF) {
             // all pages aready allocated so skip it
@@ -140,12 +157,17 @@ uint32_t *findNextFreePage(uint8_t numPages, uint32_t *map, uint32_t length, uin
                 // sprintf("Runnign %b got %d\r\n", 1<<bitPos, map[i]  & (1 << bitPos) );
                 // TODO - Fix overflowing on shift
                 if ((map[i]  & (mask << bitPos)) == 0) {
+                    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
                     sprintf("Bit Pos: %d \r\n, map[i]: %ub\r\n", bitPos, map[i]);
+                    #endif
                     // sprintf("Found free bit %d\r\n", bitPos);
                     // found a free space
                     map[i] |= (mask << bitPos); // set that bit to 1 to show that its in use
+                    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
                     sprintf("Mask shifted: %ub\r\n", mask << bitPos);
                     sprintf("Map[i] After: %ub\r\n", map[i]);
+                    sprintf("\r\n");
+                    #endif
                     // get the current byte number (i * 4), * 8 as 8 pages per byte, then the bit withi that byte equals the page
                     // as each bit is representing 1 page 
 
@@ -160,11 +182,12 @@ uint32_t *findNextFreePage(uint8_t numPages, uint32_t *map, uint32_t length, uin
 
 
                     // sprintf("After setting avl bits %d - avl bits %ub - %ub\r\n", memStartLoc, ((uint32_t) memStartLoc), ((uint32_t) memStartLoc >> 8));
-                    sprintf("\r\n");
                     return memStartLoc;
                 }
             }  
+            #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
             sprintf("Not enough space on this not empty mapPage - %d\r\n", i);
+            #endif
             // return 0;
         }
     }
@@ -173,7 +196,9 @@ uint32_t *findNextFreePage(uint8_t numPages, uint32_t *map, uint32_t length, uin
 
 uint32_t *findNextLowerFree(uint8_t numPages) {
     uint32_t *addr =  findNextFreePage(numPages, lowerBitmap, lowerMemEnd-lowerMemStart, lowerMemStart);
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("Found lower addr: %d \r\n", (uint32_t)addr);
+    #endif
     
     // viewMem(addr-1000, 1000);
     // sprintf("Starts here");
@@ -187,12 +212,16 @@ uint32_t *findNextLowerFree(uint8_t numPages) {
 
 uint32_t *findNextHigherFree(uint8_t numPages) {
     if (memStart == 0) {
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_ERROR
         sprintf("Set higher addr first\r\n");
+        #endif
         return 0;
     }
     uint32_t *addr = findNextFreePage(numPages, bitmap, LENGTH_OF_BITMAP, memStart);
 
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("Found heigher addr: %d\r\n", addr);
+    #endif
     // viewMem(addr-1000, 1000);
     // sprintf("Starts here");
     // viewMem(addr, 4 * 1024);

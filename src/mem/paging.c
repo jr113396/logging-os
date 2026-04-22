@@ -5,7 +5,7 @@
 #include "physicalMemManager.h"
 #include "pageFault.h"
 #include "invalidOpcodeFault.h"
- 
+#include "loggingLevel.h"
 // with help from https://wiki.osdev.org/Setting_Up_Paging and https://wiki.osdev.org/Paging and https://isu-rathnayaka.medium.com/develop-your-own-x86-operating-system-os-8-78a25b945dde
 
 // static uint32_t pageDirectory[NUM_PAGES] __attribute__((aligned(PAGE_FRAME_SIZE))) = {0};
@@ -67,20 +67,25 @@ void setDirEntPres(uint32_t dirIndex) {
 
 int doesDirEntryExist(uint32_t addr) {
     uint16_t index = getPageDirIndex(addr);
-    sprintf("[doesDirEntryExist] Found index for addr: %ud\r\n", addr); 
     uint32_t pageDirEntry = pageDirectory.entries[index];
-
-    sprintf("[doesDirEntryExist] entry has value %d - is Present %d\r\n", pageDirEntry, pageDirEntry & PDE_PRESENT);
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
+        sprintf("[doesDirEntryExist] Found index for addr: %ud\r\n", addr); 
+        sprintf("[doesDirEntryExist] entry has value %d - is Present %d\r\n", pageDirEntry, pageDirEntry & PDE_PRESENT);
+    #endif
     return pageDirEntry & PDE_PRESENT;
 }
 
 
 
 uint32_t *getNewPageTable() {
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("Getting pages from higher mem\r\n");
+    #endif
     uint32_t *addr = findNextHigherFree(1);
     if (addr == 0) {
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_ERROR
         sprintf("Returned addr == 0, should prob panic AAAAA!\r\n");
+        #endif
         return 0;
     }
     return addr; // return the address for it to be used 
@@ -91,12 +96,16 @@ uint32_t *getNewPageTable() {
 
 int installPageDirEntry(page_table *table, uint16_t pos) {
     if (pos > 1024) {
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
         sprintf("Install page Dir got handed pos greater than 1024\r\n");
+        #endif
         return 0;
     }
     // install a page directory entry at a position in the page dir entry
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("Pos: %d\r\n", pos);
     sprintf("Got table value: %ud\r\n", (table->entries));
+    #endif
     #if 1
         pageDirectory.entries[pos] = ((uint32_t)(table->entries)) | PDE_USER | PDE_READ_WRITE | PDE_PRESENT | (0b110 << avlBitPos); // set the corresponding avl bits but dont set it as present as we want page faults
         // sprintf("Installed page dir entry with avl bits 0b110\r\n");
@@ -107,12 +116,16 @@ int installPageDirEntry(page_table *table, uint16_t pos) {
 }
 
 void listPresentPages() {
+
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
     sprintf("*****   LISTING PRESENT PAGES ****\r\n");
+    #endif
     for (int PDE_NUM = 0; PDE_NUM < NUM_PAGES; PDE_NUM++) {
         if (pageDirectory.entries[PDE_NUM] & PDE_PRESENT) {
+            #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
             sprintf("PDE: %d -> PRESENT\r\n", PDE_NUM);
             sprintf("PDE Phys Addr: %x\r\n", pageDirectory.entries[PDE_NUM]);
-            
+            #endif
             uint32_t pageDirEntryVal = pageDirectory.entries[PDE_NUM];
             uint32_t *pageDirPhysVal = getPagesPhysAddr(pageDirEntryVal);
             page_table *pt = (page_table *) *pageDirPhysVal;
@@ -122,9 +135,13 @@ void listPresentPages() {
                 char isPTEPres = pt->entries[PTE_NUM] & PTE_NUM;
                 if (!lastWasPres && isPTEPres) 
                     lastTimePres = PTE_NUM;
+                #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
                 sprintf("PTE_NUM: %d - %d\r\n",&pt->entries[PTE_NUM], PTE_NUM);
+                #endif
                 if (lastWasPres & !isPTEPres) {
+                    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
                     sprintf("\tPTE %d to %d pres\r\n", lastTimePres, PTE_NUM-1);
+                    #endif
                 }
                 lastWasPres = isPTEPres;
             }
@@ -133,31 +150,40 @@ void listPresentPages() {
 }
 
 void installPageTabEntry(uint32_t virtAddr, uint32_t physAddr) {
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("[ENTERING INSTALLPAGETABENT]\r\n");
+    #endif
     // virtAddr - where the program thinks its trying to access
     // physAddr - where the data is actually going to be stored
     uint16_t dirPos = getPageDirIndex(virtAddr),
              tabPos = getPageTableIndex(virtAddr);
 
     uint32_t flags = (uint32_t)getPagesPhysAddr(physAddr) | PTE_USER | PTE_READ_WRITE | PTE_PRESENT | (0b110 << avlBitPos);
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("Dir Pos: %d\r\n", dirPos);
     sprintf("Tab Pos: %d\r\n", tabPos);
+    #endif
 
     if (doesDirEntryExist(virtAddr) == 0) {
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_ERROR
         sprintf("Page dir does not exist after creation\r\n");
+        #endif
         // pageFaultError(regs);
     }
-
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("Page Dir Entry Val: %d - addr %d\r\n", pageDirectory.entries[dirPos], getPagesPhysAddr(pageDirectory.entries[dirPos]));
+    #endif
     page_table *pt = (page_table *)getPagesPhysAddr(pageDirectory.entries[dirPos]);
-    
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("Read table at addr %d\r\n", pt);
-
+    #endif
     // sprintf("Current Value of pt at pos: %ud\r\n", pt->entries[tabPos]);
     pt->entries[tabPos] = flags;
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("New Value of pt at pos: %ud\r\n", pt->entries[tabPos]);
     sprintf("Set Tab Entry to %ud - %b\r\n", flags, flags);
     sprintf("[LEAVING INSTALLPAGETABENT]\r\n");
+    #endif
 
 }
 
@@ -199,7 +225,9 @@ void installNewPageFull(uint32_t addr, uint32_t physAddr) {
     kprintf("INSTALLING NEW PAGE\r\n");
     
     // does the page dir entry exist?
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("Installing New Page at dir: %d - tab: %d\r\n", dirIndex, tabIndex);
+    #endif
     
     // PAGE DIR
     // does the page dir entry exist / is present
@@ -284,7 +312,9 @@ void initPaging() {
     // put page table into page directory
     pageDirectory.entries[0] = ((unsigned int)pageTableOne.entries) | 3;// | PAGING_SUPERVISOR | PAGING_WRITE | PAGING_PRESENT;
 
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("[PAGINGINIT] PD %d - PT1 %d\r\n", pageDirectory, pageTableOne);
+    #endif
 
     install_isr_handler (14, &pageFaultHandler); 
     install_isr_handler (6, &invalidOpcodeHandler);
@@ -293,7 +323,9 @@ void initPaging() {
     loadPageDirectory(pageDirectory.entries);
     enablePaging();
     #ifdef pagingLogging
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
         sprintf("Disabling Paging\r\n");
+        #endif
         disablePages(); // disable page for the logging system
     #endif
 }

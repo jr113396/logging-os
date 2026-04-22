@@ -12,4 +12,5 @@ uint32_t getStr(char *addr, uint32_t maxLen, char ascii); // from stdio.h
 char getChar();
 void sprintf(char *fmt, ...);
 void lprintf(char *fmt, ...); // from logging.h
+int fprintf(char *buf, char *fmt, ...); // from kprintf
 #endif

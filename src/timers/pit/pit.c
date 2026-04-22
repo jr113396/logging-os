@@ -11,12 +11,15 @@
 #include <mem/kmalloc.h>
 
 uint64_t ticksHandled = 0;
-uint8_t secForTicks = 10;
-
+uint8_t secForTicks = 10; // 10 for 1ms period
 static uint8_t autoClearPages = 1;
 
 void setAutoClearPages(uint8_t val) {
     autoClearPages = val;
+}
+
+uint8_t getAutoClearPages() {
+    return autoClearPages;
 }
 
 #pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -31,7 +34,7 @@ void pitHandler(struct InterruptRegisters *regs) {
     //     // // sprintf("Got new values\r\n");
     //     // readLastAddr(); // if so read it and sprintf it
     // }
-    if (autoClearPages) {
+    if (autoClearPages && isLoggingEnabled()) {
         disablePages(); // turn off the pages
     }
 }
@@ -43,7 +46,8 @@ uint64_t getTickCount() {
 void setPitFreq(uint8_t secFor1000Ticks) {
     secForTicks = secFor1000Ticks;
     uint32_t desiredHz = (1000/secFor1000Ticks);
-    uint32_t freq = pitFreq / desiredHz; // in hz
+    uint32_t freq = pitFreq / desiredHz; // in hz -- 1193 is the freq
+
     outb(0x40, (uint8_t) freq & 0xFF);
     outb(0x40, (uint8_t) (freq >> 8) & 0xFF);
 }
@@ -53,7 +57,11 @@ void initPit() {
 
     outb(0x43, 0x36); // set mode to be square wave on channel 0
 
-    setPitFreq(secForTicks);
+    #ifdef msPIT
+        setPitFreq(secForTicks);
+    #else
+        setPitFreq(5);
+    #endif 
 } 
 
 void pauseTicks(uint32_t noTicks) {
@@ -67,6 +75,7 @@ void pauseTicks(uint32_t noTicks) {
 void pauseTimeMs(uint32_t ms) {
     uint32_t desiredHz = (1000/secForTicks); // 100 hz
     uint64_t noTicks = desiredHz * (ms / 1000); 
+    
     // desiredHz
     uint64_t startTicks = ticksHandled;
     // wait n ticks 

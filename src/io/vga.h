@@ -43,7 +43,7 @@ void clearScreen ();
 void setcursor (int x, int y);
 void writeError(char *error);
 void putCharAtPos(char c, int xPos, int yPos, size_t fgCol, size_t bgCol);
-
+void dumpBufferToVGA(char *buf, uint32_t len);
 int terminalGetX();
 int terminalGetY();
 void terminalGotoPos(int _x, int _y);

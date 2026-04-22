@@ -17,17 +17,25 @@
 #include "protected.h"
 #include <string.h>
 #include <stdio.h>
+#include <loggingLevel.h>
 
 extern char kernel_end;
 
 void varWrite() {
     uint32_t *base = (uint32_t *) 0xE00003; // 10485763
     for (int i = 0; i <1; i++) {
-        sprintf("line: %d\r\n", &varWrite);
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
+            sprintf("line: %d\r\n", &varWrite);
+        #endif
         uint32_t *addr = (base + i);
-        sprintf("Reading from %ux - i %d\r\n", addr, i);
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
+            sprintf("Reading from %ux - i %d\r\n", addr, i);
+        #endif
         uint32_t a = *addr;
-        sprintf("Writing to val %ux\r\n", addr);
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
+            sprintf("Writing to val %ux\r\n", addr);
+        #endif
+
         *addr = 12;
     }
 }
@@ -43,7 +51,9 @@ void kmain( void* mbd, unsigned int magic ) {
 
     int returnedCodes = 0;
     vgainit( );
-    sprintf("\r\nSTARTING\r\n");
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
+        sprintf("\r\nSTARTING\r\n");
+    #endif
     clearScreen();
     initGdt();
     setIDT();
@@ -55,22 +65,31 @@ void kmain( void* mbd, unsigned int magic ) {
     #ifdef multiserial
         returnedCodes += initSerial(2);
     #endif
-        
-    sprintf("Starting Protected Mode \r\n");
+    
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
+        sprintf("Starting Protected Mode \r\n");
+    #endif
     enterProtectedMode();
-    sprintf("Protected Mode Enabled\r\n");
+    
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
+        sprintf("Protected Mode Enabled\r\n");
+    #endif
 
     initPaging();
-    sprintf("paging initalised\r\n");
-
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
+        sprintf("paging initalised\r\n");
+    #endif
     contigousMemStruct freeMem = getLargestMemory(mbd, magic);
-    sprintf("Free Mem Found %d - %d -> %d Kb\r\n", freeMem.start, freeMem.end, ((freeMem.length /(1024 * 4))/4));
-    sprintf("Setting Mem Start to %ud - %d bytes after grub mem start\r\n", kernelEndAddr, kernelEndAddr-freeMem.start);
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
+        sprintf("Free Mem Found %d - %d -> %d Kb\r\n", freeMem.start, freeMem.end, ((freeMem.length /(1024 * 4))/4));
+        sprintf("Setting Mem Start to %ud - %d bytes after grub mem start\r\n", kernelEndAddr, kernelEndAddr-freeMem.start);
+    #endif
     setHigherMemStart((uint32_t *)(4 * 1024 * 1024)); // start of the 2nd page table entry
     setLowerMem(kernelEndAddr, (uint32_t *)(4 * 1024 * 1024 -1)); // end of the 1st page table entry (start of higher mem)
 
-    
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
     sprintf("Kernel End: %d\r\n\n", kernelEndAddr);
+    #endif
     // varWrite();
     // installNewPageFull(0xFFFF0000,0xFFFF0000);
     // listPresentPages();
@@ -166,7 +185,9 @@ void kmain( void* mbd, unsigned int magic ) {
     // abort( );
     // echo();
     if (returnedCodes == 0) {
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
         sprintf("\r\n\r\nStarting terminal\r\n\r\n\n\r\n");
+        #endif
         initTerminal();
     } else {
         kprintf("Got status codes: %d from init functions\n", returnedCodes);

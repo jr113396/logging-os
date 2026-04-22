@@ -350,3 +350,9 @@ int rStatus(char *fmt, ...) {
     va_end(ap);
     return numChars;
 }
+
+void dumpBufferToVGA(char *buf, uint32_t len) {
+    for (int i = 0; i < len; i++) {
+        (videoram)[i] = buf[i] | FOREGROUND(RED) | BACKGROUND(BLACK);
+    }
+}

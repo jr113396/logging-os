@@ -14,8 +14,9 @@
 #include <timers/rtc/rtc.h>
 #include <timers/pit/pit.h>
 #include <logging/logging.h>
+#include <loggingLevel.h>
 
-#define noCommands 11
+#define noCommands 13
 struct appStruct apps[noCommands];
 
 
@@ -63,6 +64,9 @@ void initTerminal() {
     char *app9Names[] = {"logs count", "count logs"};
     char *app10Names[] = {"logs clear"};
     char *app11Names[] = {"swap", "sort"};
+    char *app12Names[] = {"logs start"};
+    char *app13Names[] = {"logs stop"};
+    
     setApp(apps, 0, app1Names, 1, "Echo \t-> Enter the echo mode", &echoInit, 1);
     setApp(apps, 1, app2Names, 3,  "Clear \t-> Clears the screen and resets the cursor", &rstTerminal, 0);
     setApp(apps, 2, app3Names, 1, "Help \t-> print help for all apps", &helpTerminal, 0);
@@ -74,7 +78,8 @@ void initTerminal() {
     setApp(apps, 8, app9Names, 1, "Logs Count\t -> outputs the number of logs", &countLogs, 0);
     setApp(apps, 9, app10Names, 1, "Logs Clear\t -> Clear the logs", &clearLogs, 0);
     setApp(apps, 10, app11Names, 2, "Swap\t -> a bubble sort on a string to test the logging system", &sortInit, 0);
-
+    setApp(apps, 11, app12Names, 1, "Logs Start\t -> Enable the logging system", &enableLogging, 0);
+    setApp(apps, 12, app13Names, 1, "Logs Stop\t -> Disable the logging system", &disableLogging, 0);
     
     
     // char *commands[] = {"echo", "clear", "help", "game"};
@@ -104,7 +109,9 @@ void initTerminal() {
                     lStatus("App found %s", buffer);
                     void (*command)();
                     command = currentApp.func;
-                    sprintf("[TERMINAL ]Running %s\r\n", buffer);
+                    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
+                        sprintf("[TERMINAL ]Running %s\r\n", buffer);
+                    #endif
                     command();
                     if (currentApp.rstAfter) {
                         rstTerminal();

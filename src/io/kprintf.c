@@ -82,7 +82,7 @@ int kfprintf(void (*outChar)(char), char *fmt, va_list ap) {
     while (*fmt) {
         char chr = *fmt;
         #pragma GCC diagnostic ignored "-Wunused-value"
-        *fmt++;
+        *fmt++; // this could just by fmt++; but sometimes it was breaking so no -- dont know why 
         if (chr == '%') {              /* control */
             if (prev) {
                 outChar('%');
@@ -211,6 +211,25 @@ int kprintf(char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     int numChars = kfprintf(putchar, fmt, ap);
+    va_end(ap);
+    return numChars;
+}
+
+
+char *buffer = 0;
+uint8_t bufPos = 0;
+void putCharInBuf(char c) {
+    if (buffer == 0)
+        return;
+    buffer[bufPos++] = c;
+}
+
+int fprintf(char *buf, char *fmt, ...) {
+    buffer = buf;
+    bufPos = 0;
+    va_list ap;
+    va_start(ap, fmt);
+    int numChars = kfprintf(putCharInBuf, fmt, ap);
     va_end(ap);
     return numChars;
 }

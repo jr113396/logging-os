@@ -2,7 +2,7 @@
 #include <io/io.h>
 #include <stdio.h>
 #include "drivers/serial/serial.h"
-
+#include <loggingLevel.h>
 struct idt_value_s idt_entries[256];
 struct idt_ptr_s idt_ptr;
 
@@ -56,6 +56,8 @@ char *exceptionMsgs[] = {
 
 // using info from https://wiki.osdev.org/CPU_Registers_x86
 void eflagsTranslate(uint32_t eflags) {
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
+
     sprintf("EFLAGS: %b\r\n", eflags);
     if (eflags & (1 << 0)) 
         sprintf("Carry Set\r\n");
@@ -107,9 +109,11 @@ void eflagsTranslate(uint32_t eflags) {
 
     if (eflags & (1 << 21)) 
         sprintf("Able to use CPUID Instruction\r\n");
+    #endif
 }
 
 void displayRegisters(struct InterruptRegisters *regs) {
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
      sprintf("cr2 %d, ds: %d, edi: %d, esi: %d, ebp: %d, esp: %d, ebx: %d, esp: %d, ecx: %d, eax: %d\n",
         regs->cr2,
         regs->ds,
@@ -122,6 +126,7 @@ void displayRegisters(struct InterruptRegisters *regs) {
         regs->ecx,
         regs->eax
     );
+    #endif
 
     kprintf("cr2 %d, ds: %d, edi: %d, esi: %d, ebp: %d, esp: %d, ebx: %d, esp: %d, ecx: %d, eax: %d\n",
         regs->cr2,
@@ -136,6 +141,7 @@ void displayRegisters(struct InterruptRegisters *regs) {
         regs->eax
     );
 
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
     sprintf("I#: %d, ECode: %d\n eip: %d, csm: %d, eflags: %d, use resp: %d, ss: %d \n",
         regs->interuptNo,
         regs->errorCode,
@@ -145,6 +151,7 @@ void displayRegisters(struct InterruptRegisters *regs) {
         regs->useresp,
         regs->ss
     );
+    #endif
     
     kprintf("I#: %d, ECode: %d\n eip: %d, csm: %d, eflags: %d, use resp: %d, ss: %d \n",
         regs->interuptNo,
@@ -159,7 +166,9 @@ void displayRegisters(struct InterruptRegisters *regs) {
     
     eflagsTranslate(regs->eflags);
     uint32_t *eip_broken = (uint32_t *)(regs->eip);
-    sprintf("EIP: %x, %ux\n", eip_broken, *eip_broken);
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
+        sprintf("EIP: %x, %ux\n", eip_broken, *eip_broken);
+    #endif
     kprintf("EIP: %x, %ux\n", eip_broken, *eip_broken);
 
 }
@@ -178,8 +187,19 @@ void install_default_isrs() {
     install_isr_handler(0, &divByZeroHandler);
 }
 
-void isr_handler(struct InterruptRegisters *regs) {
-    sprintf("Calling ISR: %d\r\n", regs->interuptNo);
+
+#include <io/vga.h>
+
+char buf[120] = {0};
+void isr_handler(struct InterruptRegisters *regs) 
+{
+    fprintf(buf, "ISR %d -- REGS ADDR: %x -- %x\0", regs->interuptNo, &regs, regs);
+    // sprintf("%d\r\n", regs->interuptNo);
+    dumpBufferToVGA(buf, 120);
+    // asm("hlt;");
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
+        sprintf("Calling ISR: %d\r\n", regs->interuptNo);
+    #endif
     if (regs->interuptNo <  32) {
         if (regs->interuptNo != 14 && regs->interuptNo != 3)
             kprintf("%d - %d\n", isr_routines[regs->interuptNo], regs->interuptNo);
@@ -220,9 +240,11 @@ void setIDTGate(uint8_t num, uint32_t offset, uint16_t segment, uint8_t flags) {
 
 void irq_handler(struct InterruptRegisters *regs) {
     uint16_t irqNum = regs->interuptNo-32;
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_ERROR
     if (irqNum != 0 && irqNum != 8 && irqNum != 1) // the timers and keyboard
         sprintf("Calling IRQ: %d\r\n", regs->interuptNo-32);
-
+    #endif
+    
     void (*handler)(struct InterruptRegisters *regs);
     handler = irq_routines[regs->interuptNo -32];
     if (handler) {

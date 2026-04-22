@@ -1,6 +1,7 @@
 #include <drivers/ps2/keyboard/keyboard.h>
 #include <stdio.h>
 #include <io/vga.h>
+#include <loggingLevel.h>
 
 uint32_t getStr(char *addr, uint32_t maxLen, char ascii) {
     // get chars until \n pressed and place into addr with max len = maxLen-1
@@ -40,6 +41,10 @@ uint32_t getStr(char *addr, uint32_t maxLen, char ascii) {
                    pos+= charsPrinted-1;
            rStatus("POS = %d, c = %c -> %d", pos,c, c);
         }
+    addr[pos++] = '\0'; /// add null terminator
+    #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
+        sprintf("[GETSTR] - got \\n\r\n");
+    #endif
     // return the number of characters saved in addr 
     return pos;
 }
