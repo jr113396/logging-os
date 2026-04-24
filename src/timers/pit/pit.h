@@ -14,7 +14,7 @@
 
 // W only
 // pitModeReg (0x43)
-
+// #define TEST_CASE_3
 #define pitFreq 1193180
 #define msPIT // this is for is the pit should be at 1ms mode or as fast as possible 
 void setAutoClearPages(uint8_t val);

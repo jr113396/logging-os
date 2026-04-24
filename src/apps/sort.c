@@ -52,7 +52,9 @@ void sortInit() {
 
     kprintf("\r\nRunning Sort\r\n");
     char *addr = kmalloc(1);
+    disableLogging();
     memset(addr, 0, 1024);
+    enableLogging();
     kprintf("Enter Chars to sort\r\n> ");
     getStr(addr, 1024, 1);
     uint16_t numChars = strlen(addr);

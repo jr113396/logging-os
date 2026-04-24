@@ -31,13 +31,16 @@ void mallocTest() {
     kprintf("\r\nRunning mallocTest\r\n");
     char *addr = kmalloc(1);
     // volatile char *otherAddr = kmalloc(1);
-
+    
     kprintf("   got addr 0x%x\r\n", addr);
+
     // kprintf("STRCMP: %d\r\n", strcmp("abc", "abc"));
     // listPresentPages();
     do {
         kprintf("\r\n->");
+        disableLogging(); // so that it doesnt break on the memset
         memset(addr, 0, 1024); // this was causing issues due to the repeated writes -- it really shouldnt be but it was just giving a lot of was 0 now 0 in the logs and crashing
+        enableLogging();
         getStr(addr, 1024, 1);
         #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
             sprintf("[RCVD]\r\n");

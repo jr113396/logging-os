@@ -153,11 +153,11 @@ timeout 1
  
 color white/green yellow/blue
 
-title SCC211 Kernel
+title TYP Logging Kernel
 kernel /boot/kernel.bin cmdline=any kernel parameters
 __ENDMENU__
 cp kernel.bin ${ISO}/boot
-genisoimage -A "SCC211" -input-charset utf-8\
+genisoimage -A "TYP Logging" -input-charset utf-8\
 	-R -b boot/grub/stage2_eltorito -no-emul-boot -boot-load-size 4 \
 	-boot-info-table -o bootable.iso ${ISO}
 

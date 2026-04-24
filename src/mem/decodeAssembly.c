@@ -11,6 +11,7 @@ uint8_t *matchOpcode(uint8_t *addr, uint32_t numChars, uint32_t numInstr) {
     uint8_t numOperands = 0;
     uint8_t prefix = 0;
     uint8_t found = 0;
+    uint8_t unknown = 0;
 
     // if numInstr = null
     if (!numInstr)
@@ -22,6 +23,7 @@ uint8_t *matchOpcode(uint8_t *addr, uint32_t numChars, uint32_t numInstr) {
 
     for (uint32_t i = 0; i < numChars; i++) {
         uint8_t *inst = addr + i;
+        unknown = 0;
         if (numOperands) {
             switch (*inst) {
                 case 0x0:
@@ -275,12 +277,13 @@ uint8_t *matchOpcode(uint8_t *addr, uint32_t numChars, uint32_t numInstr) {
                 #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
                 sprintf("UNK");
                 #endif
+                unknown = 1;
                 break;
         }
         #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
         sprintf(" @ %x - %x\r\n", inst, *inst);
         #endif
-        if (!prefix)
+        if (!prefix && !unknown)
             numInstructCount++;
         prefix = 0;
         if (!found && numInstructCount >= numInstr + 1) {

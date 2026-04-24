@@ -14,15 +14,14 @@
 // this will log when new pages are created and where, and what data is written
 #define PAGING_LOGGING
 
-
 #define _LOGGING_DEBUG 4
 #define _LOGGING_INFO 3
 #define _LOGGING_ERROR 2
 #define _LOGGING_NONE 1
 
 
-#define _SERIAL_LOGGING_LEVEL _LOGGING_INFO
-#define _PRINT_LOGGING_LEVEL _LOGGING_DEBUG
+#define _SERIAL_LOGGING_LEVEL _LOGGING_DEBUG
+#define _PRINT_LOGGING_LEVEL _LOGGING_DEBUG // _LOGGING_DEBUG for logging info
 
 #if _SERIAL_LOGGING_LEVEL >= _LOGGING_DEBUG
 #endif

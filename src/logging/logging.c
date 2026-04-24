@@ -5,6 +5,7 @@
 #include <drivers/serial/serial.h>
 #include <timers/pit/pit.h>
 #include <mem/paging.h>
+#include <loggingLevel.h>
 
 static logging_data *head = NULL;
 static uint8_t loggingEnabled = 1;
@@ -25,9 +26,12 @@ void insertLog(logging_data *data) {
 }
 void readLog(logging_data * data) {
     if (data->type == READ) {
-        kprintf("@%d 0x%x: %d\r\n", data->numTicks, data->addr, data->after);
+        #if _PRINT_LOGGING_LEVEL >= _LOGGING_INFO
+            kprintf("@%d 0x%x: %d\r\n", data->numTicks, data->addr, data->after);
+        #endif
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
         sprintf("@%d 0x%x: %d\r\n", data->numTicks, data->addr, data->after);
-
+        #endif
         #if JSON_LOGS == 1
             char *type = (data->type == WRITE) ? "WRITE"  : "READ";
             char *device = (data->device) ? "MEMORY" : "OTHER";
@@ -74,8 +78,12 @@ void readLog(logging_data * data) {
             lprintf("@%d 0x%x: %d\r\n", data->numTicks, data->addr, data->after);
         #endif
     } else {
-        sprintf("@%d 0x%x: %d -> %d\r\n", data->numTicks, data->addr, data->before, data->after);
-        kprintf("@%d 0x%x: %d -> %d\r\n", data->numTicks, data->addr, data->before, data->after);
+        #if _PRINT_LOGGING_LEVEL >= _LOGGING_INFO
+            kprintf("@%d 0x%x: %d -> %d\r\n", data->numTicks, data->addr, data->before, data->after);
+        #endif
+        #if _SERIAL_LOGGING_LEVEL >= _LOGGING_INFO
+            sprintf("@%d 0x%x: %d -> %d\r\n", data->numTicks, data->addr, data->before, data->after);
+        #endif
         
         #if JSON_LOGS == 1
             char *type = (data->type == WRITE) ? "WRITE"  : "READ";
@@ -109,6 +117,7 @@ void readLog(logging_data * data) {
     }
 }
 void readLogs() {
+
     kprintf("\r\n-- Logs -- \r\n");
     logging_data *data = head;
     uint32_t numDisplayed = 0;
